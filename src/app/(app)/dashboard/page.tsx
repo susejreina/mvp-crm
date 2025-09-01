@@ -119,12 +119,12 @@ export default function DashboardPage() {
         <QuickActionCard
           title="Añadir Nueva venta"
           href="/ventas/nueva"
-          icon={<span className="text-4xl">+</span>}
+          icon={<span className="text-6xl font-light">+</span>}
         />
 
         {/* Total Approved USD Sales */}
         <KpiCard
-          title="Ventas totales manual"
+          title="Ventas totales"
           value={loading.totalApprovedUsd ? '' : formatCurrency(metrics.totalApprovedUsd)}
           subtitle="USD"
           href="/ventas"
@@ -132,7 +132,10 @@ export default function DashboardPage() {
           error={errors.totalApprovedUsd}
           icon={
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600">💰</span>
+              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z"/>
+                <path d="M6 8h8v2H6V8zm0 4h5v2H6v-2z"/>
+              </svg>
             </div>
           }
         />
@@ -146,7 +149,9 @@ export default function DashboardPage() {
           error={errors.clientsCount}
           icon={
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-600">👥</span>
+              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+              </svg>
             </div>
           }
         />
@@ -160,7 +165,9 @@ export default function DashboardPage() {
           error={errors.activeProductsCount}
           icon={
             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <span className="text-purple-600">🛒</span>
+              <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 2L3 7v11a2 2 0 002 2h10a2 2 0 002-2V7l-7-5zM6 9a1 1 0 012 0v3a1 1 0 11-2 0V9zm6 0a1 1 0 10-2 0v3a1 1 0 102 0V9z" clipRule="evenodd"/>
+              </svg>
             </div>
           }
         />
@@ -175,7 +182,9 @@ export default function DashboardPage() {
           error={errors.sellersCount}
           icon={
             <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-              <span className="text-orange-600">🏢</span>
+              <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2V4zm2 0h8a2 2 0 012 2v8a2 2 0 01-2 2H6V4zm6 4a2 2 0 11-4 0 2 2 0 014 0zm-2 6a4 4 0 100-8 4 4 0 000 8z" clipRule="evenodd"/>
+              </svg>
             </div>
           }
         />

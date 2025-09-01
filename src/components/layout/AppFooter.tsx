@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 const navigation = [
   { name: 'Escritorio', href: '/dashboard' },
@@ -15,10 +16,12 @@ export default function AppFooter() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">%</span>
-            </div>
-            <span className="ml-2 text-lg font-semibold">Academia de IA</span>
+            <Image 
+              src="/assets/logo-white-min.svg" 
+              alt="Academia de IA" 
+              width={140} 
+              height={32}
+            />
           </div>
 
           {/* Footer Navigation */}
