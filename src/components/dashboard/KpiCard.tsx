@@ -22,7 +22,7 @@ export default function KpiCard({
   error
 }: KpiCardProps) {
   const content = (
-    <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow h-full">
       <div className="flex flex-col h-full">
         {/* Icon in top left */}
         {icon && <div className="flex justify-start mb-4">{icon}</div>}
