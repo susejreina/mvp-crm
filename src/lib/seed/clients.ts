@@ -1,3 +1,4 @@
+// src/lib/seed/clients.ts
 import { db } from '../firebase';
 import { collection, doc, setDoc, Timestamp } from 'firebase/firestore';
 import { Client, SaleUser, slugifyEmail } from '../types';
@@ -11,29 +12,19 @@ export interface SaleInput {
   users?: SaleUser[];
 }
 
-export async function upsertClientFromSaleInput(saleInput: SaleInput): Promise<void> {
-  const clientId = slugifyEmail(saleInput.customerEmail);
+export async function upsertClientFromSaleInput(sale: SaleInput): Promise<void> {
+  const clientId = slugifyEmail(sale.customerEmail);
   const clientRef = doc(collection(db, 'clients'), clientId);
-  
-  const baseClientData: Partial<Client> = {
+
+  const data: Partial<Client> = {
     id: clientId,
-    name: saleInput.customerName,
-    email: saleInput.customerEmail,
-    phone: saleInput.customerPhone,
-    lastPurchaseAt: saleInput.date,
-  };
-  
-  // For new clients, set creation timestamp
-  const clientData: Partial<Client> = {
-    ...baseClientData,
+    name: sale.customerName,
+    email: sale.customerEmail,
+    lastPurchaseAt: sale.date,
     createdAt: Timestamp.now(),
   };
-  
-  // If it's a group sale, merge users array
-  if (saleInput.type === 'group' && saleInput.users) {
-    clientData.users = saleInput.users;
-  }
-  
-  // Use merge: true for idempotency
-  await setDoc(clientRef, clientData, { merge: true });
+  if (sale.customerPhone) data.phone = sale.customerPhone;
+  if (sale.type === 'group' && sale.users?.length) data.users = sale.users;
+
+  await setDoc(clientRef, data, { merge: true });
 }

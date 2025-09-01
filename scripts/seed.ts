@@ -1,4 +1,11 @@
-#!/usr/bin/env node
+// scripts/seed.ts
+//#!/usr/bin/env node
+import { config } from 'dotenv';
+import path from 'path';
+
+// Carga .env.local desde la raíz del repo
+config({ path: path.resolve(process.cwd(), '.env.local') });
+
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '../src/lib/firebase';
 import { runAllSeeds } from '../src/lib/seed';
@@ -6,45 +13,32 @@ import { runAllSeeds } from '../src/lib/seed';
 async function main() {
   const email = process.env.SEED_ADMIN_EMAIL;
   const password = process.env.SEED_ADMIN_PASSWORD;
-  
+
+  console.log('Variables:', {
+    email: email ? 'OK' : 'FALTA',
+    password: password ? 'OK' : 'FALTA',
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'OK' : 'FALTA',
+  });
+
   if (!email || !password) {
-    console.error('Error: SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set in environment');
-    console.error('Add them to your .env.local file:');
-    console.error('SEED_ADMIN_EMAIL=your-admin@domain.com');
-    console.error('SEED_ADMIN_PASSWORD=your-password');
+    console.error('Faltan SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD en .env.local');
     process.exit(1);
   }
-  
+
   try {
-    console.log('Authenticating with Firebase Auth...');
-    console.log(`Email: ${email}`);
-    
-    // Authenticate with Email/Password
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const adminUid = userCredential.user.uid;
-    
-    console.log('Authentication successful');
-    console.log(`Admin UID: ${adminUid}`);
-    
-    // Run all seeds
+    console.log('Autenticando con Firebase Auth...');
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const adminUid = cred.user.uid;
+    console.log('OK. Admin UID:', adminUid);
+
     await runAllSeeds({ adminUid });
-    
-    // Sign out
+
     await signOut(auth);
-    console.log('Signed out successfully');
-    
-  } catch (error: any) {
-    console.error('Seed script failed:', error.message);
-    if (error.code) {
-      console.error(`Error code: ${error.code}`);
-    }
+    console.log('Seed completado ✅');
+  } catch (err: any) {
+    console.error('Error durante el seed:', err?.message ?? err);
     process.exit(1);
   }
-  
-  process.exit(0);
 }
 
-main().catch((error) => {
-  console.error('Unhandled error:', error);
-  process.exit(1);
-});
+main();
