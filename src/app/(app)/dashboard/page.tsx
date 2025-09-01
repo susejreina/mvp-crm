@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase';
 import { getTotalApprovedUsd, getClientsCount, getActiveProductsCount, getSellersCount } from '@/lib/dashboard/queries';
 import KpiCard from '@/components/dashboard/KpiCard';
 import QuickActionCard from '@/components/dashboard/QuickActionCard';
+import SaleKindModal from '@/components/sales/SaleKindModal';
 
 interface DashboardMetrics {
   totalApprovedUsd: number;
@@ -28,6 +29,8 @@ interface ErrorStates {
 }
 
 export default function DashboardPage() {
+  const [modalOpen, setModalOpen] = useState(false);
+  
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalApprovedUsd: 0,
     clientsCount: 0,
@@ -118,7 +121,7 @@ export default function DashboardPage() {
         {/* Quick Action Card */}
         <QuickActionCard
           title="Añadir Nueva venta"
-          href="/ventas/nueva"
+          onClick={() => setModalOpen(true)}
           icon={<span className="text-6xl font-light">+</span>}
         />
 
@@ -189,6 +192,12 @@ export default function DashboardPage() {
           }
         />
       </div>
+
+      {/* Sale Kind Modal */}
+      <SaleKindModal 
+        open={modalOpen} 
+        onOpenChange={setModalOpen} 
+      />
     </div>
   );
 }
