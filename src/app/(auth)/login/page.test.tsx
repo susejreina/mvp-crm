@@ -52,7 +52,7 @@ describe('LoginPage', () => {
       expect(screen.getByText(/¿se te olvidó tu contraseña\?/i)).toBeInTheDocument();
     });
 
-    it('should redirect to /hola if user is already authenticated', () => {
+    it('should redirect to /dashboard if user is already authenticated', () => {
       // Mock user authenticated
       vi.mocked(authService.onAuthStateChanged).mockImplementation((callback) => {
         callback({
@@ -66,7 +66,7 @@ describe('LoginPage', () => {
 
       render(<LoginPage />);
 
-      expect(mockRouter.replace).toHaveBeenCalledWith('/hola');
+      expect(mockRouter.replace).toHaveBeenCalledWith('/dashboard');
     });
   });
 
