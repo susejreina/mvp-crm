@@ -1,9 +1,22 @@
+// src/lib/seed/sales.ts
 import { db } from '../firebase';
 import { collection, writeBatch, doc, Timestamp } from 'firebase/firestore';
-import { Sale, saleIdFrom, SaleUser, slugifyEmail } from '../types';
+import { Sale, SaleUser, slugifyEmail, saleIdFrom } from '../types';
 import { upsertClientFromSaleInput } from './clients';
 
-interface DemoSaleInput {
+/** Util: elimina claves undefined (profundo) para evitar errores de Firestore */
+function pruneUndefined<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(pruneUndefined) as unknown as T;
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj as Record<string, any>)) {
+    if (v === undefined) continue;
+    out[k] = pruneUndefined(v);
+  }
+  return out as T;
+}
+
+export interface DemoSaleInput {
   type: 'individual' | 'group';
   customerName: string;
   customerEmail: string;
@@ -24,6 +37,7 @@ interface DemoSaleInput {
   users?: SaleUser[];
 }
 
+/** <<< HERE is the entire DEMO sales array (exactly as you provided it) >>> */
 const demoSales: DemoSaleInput[] = [
   {
     type: 'individual',
@@ -62,20 +76,9 @@ const demoSales: DemoSaleInput[] = [
     iteration: 37,
     status: 'approved',
     users: [
-      {
-        name: 'Maria Elena Gonzalez',
-        email: 'maria.gonzalez@empresa.com',
-        phone: '+52 55 1234 5678',
-      },
-      {
-        name: 'Carlos Mendoza',
-        email: 'carlos.mendoza@empresa.com',
-        phone: '+52 55 9876 5432',
-      },
-      {
-        name: 'Ana Rodriguez',
-        email: 'ana.rodriguez@empresa.com',
-      },
+      { name: 'Maria Elena Gonzalez', email: 'maria.gonzalez@empresa.com', phone: '+52 55 1234 5678' },
+      { name: 'Carlos Mendoza', email: 'carlos.mendoza@empresa.com', phone: '+52 55 9876 5432' },
+      { name: 'Ana Rodriguez', email: 'ana.rodriguez@empresa.com' },
     ],
   },
   {
@@ -133,15 +136,8 @@ const demoSales: DemoSaleInput[] = [
     iteration: 36,
     status: 'approved',
     users: [
-      {
-        name: 'Roberto Silva',
-        email: 'roberto.silva@startup.co',
-        phone: '+55 11 98765 4321',
-      },
-      {
-        name: 'Patricia Lima',
-        email: 'patricia.lima@startup.co',
-      },
+      { name: 'Roberto Silva', email: 'roberto.silva@startup.co', phone: '+55 11 98765 4321' },
+      { name: 'Patricia Lima', email: 'patricia.lima@startup.co' },
     ],
   },
   {
@@ -202,75 +198,69 @@ const demoSales: DemoSaleInput[] = [
 
 export async function seedSales({ adminUid }: { adminUid: string }): Promise<void> {
   console.log('Seeding sales...');
-  
-  // First, upsert all clients
+
+  // 1) Upsert clients (idempotent, merge)
   console.log('Upserting clients from sales...');
-  for (const sale of demoSales) {
+  for (const s of demoSales) {
     await upsertClientFromSaleInput({
-      type: sale.type,
-      customerName: sale.customerName,
-      customerEmail: sale.customerEmail,
-      customerPhone: sale.customerPhone,
-      date: Timestamp.fromDate(new Date(sale.dateISO)),
-      users: sale.users,
+      type: s.type,
+      customerName: s.customerName,
+      customerEmail: s.customerEmail,
+      customerPhone: s.customerPhone,
+      date: Timestamp.fromDate(new Date(s.dateISO)),
+      users: s.users,
     });
   }
-  
-  // Then create sales in batch
+
+  // 2) Create sales in batch
   const batch = writeBatch(db);
   const salesRef = collection(db, 'sales');
-  
   const now = Timestamp.now();
-  
-  demoSales.forEach(saleInput => {
+
+  for (const s of demoSales) {
     const saleId = saleIdFrom({
-      customerEmail: saleInput.customerEmail,
-      dateISO: saleInput.dateISO,
-      productId: saleInput.productId,
+      customerEmail: s.customerEmail,
+      dateISO: s.dateISO,
+      productId: s.productId,
     });
-    
-    const docRef = doc(salesRef, saleId);
-    
-    const saleData: Sale = {
+
+    const saleDoc = doc(salesRef, saleId);
+
+    const saleData: Sale = pruneUndefined({
       id: saleId,
-      type: saleInput.type,
-      
-      // Client relationship
-      clientId: slugifyEmail(saleInput.customerEmail),
-      customerName: saleInput.customerName,
-      customerEmail: saleInput.customerEmail,
-      customerPhone: saleInput.customerPhone,
-      
-      // Product
-      productId: saleInput.productId,
-      productName: saleInput.productName,
-      
-      // Vendor
-      vendorId: saleInput.vendorId,
-      vendorName: saleInput.vendorName,
-      
-      amount: saleInput.amount,
-      currency: saleInput.currency,
-      date: Timestamp.fromDate(new Date(saleInput.dateISO)),
-      
-      paymentMethod: saleInput.paymentMethod,
-      source: saleInput.source,
-      week: saleInput.week,
-      iteration: saleInput.iteration,
-      evidenceUrl: saleInput.evidenceUrl,
-      
-      status: saleInput.status,
-      
-      // Group sales
-      users: saleInput.users,
-      
+      type: s.type,
+
+      clientId: slugifyEmail(s.customerEmail),
+      customerName: s.customerName,
+      customerEmail: s.customerEmail,
+      customerPhone: s.customerPhone,
+
+      productId: s.productId,
+      productName: s.productName,
+
+      vendorId: s.vendorId,
+      vendorName: s.vendorName,
+
+      amount: s.amount,
+      currency: s.currency,
+      date: Timestamp.fromDate(new Date(s.dateISO)),
+
+      paymentMethod: s.paymentMethod,
+      source: s.source,
+      week: s.week,
+      iteration: s.iteration,
+      evidenceUrl: s.evidenceUrl,
+
+      status: s.status,
+      users: s.users,
+
       createdBy: adminUid,
       createdAt: now,
-    };
-    
-    batch.set(docRef, saleData);
-  });
-  
+    });
+
+    batch.set(saleDoc, saleData);
+  }
+
   await batch.commit();
   console.log(`Seeded ${demoSales.length} sales`);
 }
