@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
+import { useUsdFieldLogic } from '../../hooks/useUsdFieldLogic';
 import { 
   getActiveClients, 
   resolveClientForSale
@@ -166,7 +167,11 @@ export default function IndividualSaleForm() {
     evidenceValue: '',
   });
   
-  const [usdAmount, setUsdAmount] = useState<string>('');
+  // USD amount logic
+  const { usdAmount, setUsdAmount, isUsdDisabled, handleUsdAmountChange } = useUsdFieldLogic(
+    formData.currency,
+    formData.saleValue
+  );
   
   const [errors, setErrors] = useState<FormErrors>({});
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
@@ -208,17 +213,6 @@ export default function IndividualSaleForm() {
   }, []);
   
   // Week is not auto-calculated - user must enter it manually
-
-  // Update USD amount when currency is USD or sale value changes
-  useEffect(() => {
-    if (formData.currency === 'USD' && formData.saleValue) {
-      setUsdAmount(formData.saleValue);
-    } else if (formData.currency !== 'USD') {
-      // Keep the current usdAmount value when currency is not USD
-    } else {
-      setUsdAmount('');
-    }
-  }, [formData.currency, formData.saleValue]);
   
   // Client autocomplete
   const handleClientNameChange = (value: string) => {
@@ -381,6 +375,9 @@ export default function IndividualSaleForm() {
       
       // Create sale data
       const saleData: CreateSaleData = {
+        // Sale type
+        type: 'individual',
+        
         // Client info
         clientId: client.id,
         customerName: client.name,
@@ -634,19 +631,11 @@ export default function IndividualSaleForm() {
               id="usd-amount"
               type="text"
               value={usdAmount}
-              onChange={(e) => {
-                if (formData.currency !== 'USD') {
-                  const value = e.target.value;
-                  // Only allow numbers, dots, and commas
-                  if (/^[\d.,]*$/.test(value)) {
-                    setUsdAmount(value);
-                  }
-                }
-              }}
-              readOnly={formData.currency === 'USD'}
-              placeholder={formData.currency === 'USD' ? "Valor en USD" : "Valor en USD*"}
+              onChange={(e) => handleUsdAmountChange(e.target.value)}
+              readOnly={isUsdDisabled}
+              placeholder={isUsdDisabled ? "Valor en USD" : "Valor en USD*"}
               className={`w-full px-3 py-3 bg-[#E8EDF5] border rounded-lg focus:outline-none placeholder:text-[#4A739C] text-[#4A739C] ${
-                formData.currency === 'USD' 
+                isUsdDisabled 
                   ? 'cursor-not-allowed' 
                   : 'focus:ring-2 focus:ring-blue-500 focus:border-transparent'
               } ${

@@ -3,6 +3,9 @@ import { db } from '../firebase';
 import { Sale, Product, saleIdFrom } from '../types';
 
 export interface CreateSaleData {
+  // Sale type
+  type?: 'individual' | 'group';
+  
   // Client info
   clientId: string;
   customerName: string;
@@ -32,6 +35,9 @@ export interface CreateSaleData {
   // Evidence (optional)
   evidenceType?: string;
   evidenceValue?: string;
+  
+  // Group sale users (optional)
+  users?: Array<{ name: string; email: string; phone?: string }>;
 }
 
 /**
@@ -51,7 +57,7 @@ export async function createSale(data: CreateSaleData): Promise<Sale> {
   const existingSale = await getDoc(saleRef);
   
   const saleData: Omit<Sale, 'id'> = {
-    type: 'individual',
+    type: data.type || 'individual',
     
     // Client info (denormalized)
     clientId: data.clientId,
@@ -82,6 +88,9 @@ export async function createSale(data: CreateSaleData): Promise<Sale> {
     // Evidence (only include if present)
     ...(data.evidenceType ? { evidenceType: data.evidenceType } : {}),
     ...(data.evidenceValue ? { evidenceValue: data.evidenceValue } : {}),
+    
+    // Group sale users (only include if present)
+    ...(data.users ? { users: data.users } : {}),
     
     // Status
     status: 'pending',

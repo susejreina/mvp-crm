@@ -52,19 +52,18 @@ export default function DashboardPage() {
     sellersCount: null,
   });
 
-  useEffect(() => {
-    const loadMetrics = async () => {
-      const promises = [
-        getTotalApprovedUsd(db).then(
-          (value) => {
-            setMetrics(prev => ({ ...prev, totalApprovedUsd: value }));
-            setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
-          },
-          (error) => {
-            setErrors(prev => ({ ...prev, totalApprovedUsd: error.message }));
-            setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
-          }
-        ),
+  const loadMetrics = async () => {
+    const promises = [
+      getTotalApprovedUsd(db).then(
+        (value) => {
+          setMetrics(prev => ({ ...prev, totalApprovedUsd: value }));
+          setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
+        },
+        (error) => {
+          setErrors(prev => ({ ...prev, totalApprovedUsd: error.message }));
+          setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
+        }
+      ),
         getClientsCount(db).then(
           (value) => {
             setMetrics(prev => ({ ...prev, clientsCount: value }));
@@ -100,7 +99,18 @@ export default function DashboardPage() {
       await Promise.all(promises);
     };
 
+  useEffect(() => {
     loadMetrics();
+  }, []);
+
+  // Refresh metrics when window gains focus (user returns from another page)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadMetrics();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const formatCurrency = (amount: number) => {
