@@ -26,8 +26,27 @@ export interface Client {
   email: string;
   phone?: string;
   users?: Array<{ name: string; email: string; phone?: string }>;
+  active: boolean;
   createdAt: Timestamp;
   lastPurchaseAt?: Timestamp;
+}
+
+export interface Source {
+  id: string;
+  name: string;
+  createdAt: Timestamp;
+}
+
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  createdAt: Timestamp;
+}
+
+export interface EvidenceType {
+  id: string;
+  name: string;
+  createdAt: Timestamp;
 }
 
 export interface Sale {

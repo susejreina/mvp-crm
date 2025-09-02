@@ -1,6 +1,6 @@
 // src/lib/seed/clients.ts
 import { db } from '../firebase';
-import { collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { Client, SaleUser, slugifyEmail } from '../types';
 
 export interface SaleInput {
@@ -20,6 +20,7 @@ export async function upsertClientFromSaleInput(sale: SaleInput): Promise<void> 
     id: clientId,
     name: sale.customerName,
     email: sale.customerEmail,
+    active: true,
     lastPurchaseAt: sale.date,
     createdAt: Timestamp.now(),
   };
@@ -27,4 +28,24 @@ export async function upsertClientFromSaleInput(sale: SaleInput): Promise<void> 
   if (sale.type === 'group' && sale.users?.length) data.users = sale.users;
 
   await setDoc(clientRef, data, { merge: true });
+}
+
+export async function migrateClientsActiveField(): Promise<number> {
+  console.log('Migrating clients to add active field...');
+  const clientsRef = collection(db, 'clients');
+  const snapshot = await getDocs(clientsRef);
+  
+  let migrated = 0;
+  for (const docSnapshot of snapshot.docs) {
+    const data = docSnapshot.data();
+    if (data.active === undefined) {
+      await setDoc(docSnapshot.ref, { active: true }, { merge: true });
+      migrated++;
+    }
+  }
+  
+  if (migrated > 0) {
+    console.log(`Migrated ${migrated} clients to include active field`);
+  }
+  return migrated;
 }
