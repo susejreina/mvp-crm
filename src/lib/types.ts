@@ -69,13 +69,15 @@ export interface Sale {
   
   amount: number;
   currency: 'USD' | 'MXN' | 'COP';
+  usdAmount: number; // Amount in USD for consistent dashboard calculations
   date: Timestamp;
   
   paymentMethod: 'transfer_mx' | 'transfer_co' | 'card' | 'paypal' | 'other';
   source: string;
   week: number;
   iteration: number;
-  evidenceUrl?: string;
+  evidenceType?: string;
+  evidenceValue?: string;
   
   status: 'pending' | 'approved' | 'denied';
   
