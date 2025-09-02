@@ -114,9 +114,11 @@ Transaction records linking vendors, products, and clients with comprehensive tr
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Database Seeding
+## Database Setup
 
-The project includes a comprehensive seeding system for development and testing.
+### Database Seeding & Migrations
+
+The project includes a comprehensive seeding and migration system for development and testing.
 
 ### Environment Configuration
 
@@ -129,33 +131,61 @@ SEED_ADMIN_PASSWORD=your-password
 
 **Important**: The admin account must exist in Firebase Authentication and have a corresponding document in the `vendors` collection with `role: "admin"`.
 
-### Running the Seed
+### Running Seeds and Migrations
 
 ```bash
+npm run seed
+# or
 pnpm seed
 ```
 
+This command will:
+1. **Run database migrations** (e.g., adding missing fields to existing documents)
+2. **Seed reference data** (sources, payment methods, evidence types)
+3. **Seed sample data** (products, vendors, sales, clients)
+
 ### What Gets Seeded
 
-1. **Products** (8 demo products)
+1. **Reference Data**
+   - 8 sales sources (referrals, social media, etc.)
+   - 4 payment methods (transfer, credit card, PayPal, cash)
+   - 2 evidence types (payment confirmation, enrollment proof)
+
+2. **Products** (8 demo products)
    - AI courses and workshops with realistic pricing
    - Multiple currencies (USD, MXN, COP)
    - Mix of active/inactive products
 
-2. **Vendors** (3 demo vendors)
+3. **Vendors** (3 demo vendors)
    - 1 admin + 2 sellers
    - All active by default
    - Profile photos
 
-3. **Sales & Clients** (8 demo sales)
+4. **Sales & Clients** (8 demo sales)
    - Mix of individual and group sales
    - Various statuses (pending, approved, denied)
    - Different payment methods and sources
    - Clients automatically created from sales data
 
+### Migrations Included
+
+- **Client Migration**: Adds `active: true` field to existing client documents
+
+### Advanced Seeding Options
+
+For development and testing, you can reset specific data:
+
+```bash
+# Reset all reference collections (sources, payment_methods, evidence_types)
+npm run seed -- --reset-all
+
+# Reset specific collections
+npm run seed -- --reset=sources,payment_methods
+```
+
 ### Idempotency
 
-The seeding system is idempotent - you can run `pnpm seed` multiple times without creating duplicates. Documents use deterministic IDs based on email slugs, SKUs, and composite keys.
+The seeding system is idempotent - you can run `npm run seed` multiple times without creating duplicates. Documents use deterministic IDs based on email slugs, SKUs, and composite keys.
 
 ## Development
 
@@ -204,7 +234,9 @@ Remember to implement proper security rules before production deployment.
 - `pnpm build` - Build for production
 - `pnpm start` - Start production server
 - `pnpm lint` - Run ESLint
-- `pnpm seed` - Populate database with demo data
+- `pnpm seed` - Run database migrations and populate with demo data
+- `pnpm test` - Run tests
+- `pnpm test:watch` - Run tests in watch mode
 
 ## Contributing
 
