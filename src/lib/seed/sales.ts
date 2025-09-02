@@ -27,6 +27,7 @@ export interface DemoSaleInput {
   vendorName: string;
   amount: number;
   currency: 'USD' | 'MXN' | 'COP';
+  usdAmount: number; // Amount in USD for consistent dashboard calculations
   dateISO: string; // YYYY-MM-DD
   paymentMethod: 'transfer_mx' | 'transfer_co' | 'card' | 'paypal' | 'other';
   source: string;
@@ -50,6 +51,7 @@ const demoSales: DemoSaleInput[] = [
     vendorName: 'Angelica Bou',
     amount: 3660.22,
     currency: 'MXN',
+    usdAmount: 183.01,
     dateISO: '2025-01-06',
     paymentMethod: 'transfer_mx',
     source: 'ASPE',
@@ -69,6 +71,7 @@ const demoSales: DemoSaleInput[] = [
     vendorName: 'Angela Ojeda',
     amount: 590,
     currency: 'USD',
+    usdAmount: 590,
     dateISO: '2025-01-05',
     paymentMethod: 'card',
     source: 'LinkedIn',
@@ -92,6 +95,7 @@ const demoSales: DemoSaleInput[] = [
     vendorName: 'Carlos Rodriguez',
     amount: 450000,
     currency: 'COP',
+    usdAmount: 112.5,
     dateISO: '2025-01-04',
     paymentMethod: 'transfer_co',
     source: 'Facebook',
@@ -110,6 +114,7 @@ const demoSales: DemoSaleInput[] = [
     vendorName: 'Angelica Bou',
     amount: 299,
     currency: 'USD',
+    usdAmount: 299,
     dateISO: '2025-01-03',
     paymentMethod: 'paypal',
     source: 'YouTube',
@@ -129,6 +134,7 @@ const demoSales: DemoSaleInput[] = [
     vendorName: 'Angela Ojeda',
     amount: 798,
     currency: 'USD',
+    usdAmount: 798,
     dateISO: '2025-01-02',
     paymentMethod: 'card',
     source: 'Referral',
@@ -150,6 +156,7 @@ const demoSales: DemoSaleInput[] = [
     vendorName: 'Carlos Rodriguez',
     amount: 149,
     currency: 'USD',
+    usdAmount: 149,
     dateISO: '2025-01-01',
     paymentMethod: 'card',
     source: 'Instagram',
@@ -168,6 +175,7 @@ const demoSales: DemoSaleInput[] = [
     vendorName: 'Angelica Bou',
     amount: 2499,
     currency: 'MXN',
+    usdAmount: 124.95,
     dateISO: '2024-12-30',
     paymentMethod: 'transfer_mx',
     source: 'Email Campaign',
@@ -187,6 +195,7 @@ const demoSales: DemoSaleInput[] = [
     vendorName: 'Carlos Rodriguez',
     amount: 280000,
     currency: 'COP',
+    usdAmount: 70,
     dateISO: '2024-12-29',
     paymentMethod: 'transfer_co',
     source: 'WhatsApp',
@@ -243,6 +252,7 @@ export async function seedSales({ adminUid }: { adminUid: string }): Promise<voi
 
       amount: s.amount,
       currency: s.currency,
+      usdAmount: s.usdAmount,
       date: Timestamp.fromDate(new Date(s.dateISO)),
 
       paymentMethod: s.paymentMethod,

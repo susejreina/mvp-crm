@@ -4,23 +4,23 @@ import type { Sale } from '@/lib/types';
 export async function getTotalApprovedUsd(db: Firestore): Promise<number> {
   try {
     const salesRef = collection(db, 'sales');
-    const q = query(
-      salesRef,
-      where('status', '==', 'approved'),
-      where('currency', '==', 'USD')
-    );
+    // Get all sales - no currency filter needed since we have usdAmount field
     
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(salesRef);
     
     let total = 0;
     querySnapshot.forEach((doc) => {
       const sale = doc.data() as Sale;
-      total += sale.amount;
+      // Include pending and approved, exclude denied
+      if (sale.status !== 'denied') {
+        // Use usdAmount field for consistent calculations regardless of currency
+        total += sale.usdAmount || sale.amount; // Fallback to amount for legacy data
+      }
     });
     
     return total;
   } catch (error) {
-    throw new Error(`Failed to get total approved USD sales: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Failed to get total USD sales: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
