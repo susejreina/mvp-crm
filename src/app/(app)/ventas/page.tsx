@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Metadata } from 'next';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
@@ -23,11 +22,6 @@ import { exportSalesToCSV } from '../../../lib/utils/csvExport';
 import { getProducts } from '../../../lib/firestore/sales';
 import { getActiveClients } from '../../../lib/firestore/clients';
 import { Product, Client } from '../../../lib/types';
-
-export const metadata: Metadata = {
-  title: 'Registro de Ventas | Academia de IA CRM',
-  description: 'Gestiona y visualiza todas las ventas con filtros, paginación y exportación a CSV',
-};
 
 export default function VentasPage() {
   const router = useRouter();
