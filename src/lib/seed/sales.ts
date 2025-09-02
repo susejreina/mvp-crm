@@ -33,7 +33,7 @@ export interface DemoSaleInput {
   source: string;
   week: number;
   iteration: number;
-  status: 'pending' | 'approved' | 'denied';
+  status: 'pending' | 'approved' | 'rejected';
   evidenceUrl?: string;
   users?: SaleUser[];
 }
@@ -120,7 +120,7 @@ const demoSales: DemoSaleInput[] = [
     source: 'YouTube',
     week: 17,
     iteration: 37,
-    status: 'denied',
+    status: 'rejected',
     evidenceUrl: 'https://drive.google.com/example2',
   },
   {
@@ -201,7 +201,7 @@ const demoSales: DemoSaleInput[] = [
     source: 'WhatsApp',
     week: 15,
     iteration: 35,
-    status: 'denied',
+    status: 'rejected',
   },
 ];
 

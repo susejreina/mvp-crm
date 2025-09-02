@@ -79,7 +79,7 @@ export interface Sale {
   evidenceType?: string;
   evidenceValue?: string;
   
-  status: 'pending' | 'approved' | 'denied';
+  status: 'pending' | 'approved' | 'rejected';
   
   // Only for group sales
   users?: Array<{ name: string; email: string; phone?: string }>;
