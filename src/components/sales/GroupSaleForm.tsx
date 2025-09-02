@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Trash2 } from 'lucide-react';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
@@ -176,8 +177,8 @@ export default function GroupSaleForm() {
     evidenceValue: '',
   });
   
-  // Users state
-  const [users, setUsers] = useState<SaleUser[]>([]);
+  // Users state - start with one default user for group sales
+  const [users, setUsers] = useState<SaleUser[]>([{ name: '', email: '', phone: '' }]);
   
   // USD amount logic
   const { usdAmount, setUsdAmount, isUsdDisabled, handleUsdAmountChange } = useUsdFieldLogic(
@@ -815,56 +816,6 @@ export default function GroupSaleForm() {
             </div>
           </div>
 
-          {/* Row 4: Evidence */}
-          <div className="w-1/2 flex gap-4">
-            {/* Evidence Type Select */}
-            <div className="flex-1">
-              <label htmlFor="evidence-type" className="sr-only">
-                Evidencia de la transacción
-              </label>
-              <select
-                id="evidence-type"
-                value={formData.evidenceType}
-                onChange={(e) => setFormData(prev => ({ ...prev, evidenceType: e.target.value, evidenceValue: '' }))}
-                className="w-full px-3 py-3 bg-[#E8EDF5] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[#4A739C]"
-              >
-                <option value="" className="text-[#4A739C]">Evidencia de la transacción</option>
-                {evidenceTypes.map(et => (
-                  <option key={et.id} value={et.id} className="text-[#4A739C]">
-                    {et.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Evidence Value Input */}
-            {formData.evidenceType && (
-              <div className="flex-1">
-                <label htmlFor="evidence-value" className="sr-only">
-                  {formData.evidenceType === 'url' ? 'URL' : 'Número de transacción'}
-                </label>
-                <input
-                  id="evidence-value"
-                  type="text"
-                  value={formData.evidenceValue}
-                  onChange={(e) => setFormData(prev => ({ ...prev, evidenceValue: e.target.value }))}
-                  placeholder={
-                    formData.evidenceType === 'url' 
-                      ? 'Pega la URL...'
-                      : 'Número de transacción...'
-                  }
-                  className={`w-full px-3 py-3 bg-[#E8EDF5] border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-[#4A739C] text-[#4A739C] ${
-                    errors.evidenceValue ? 'border-red-300' : 'border-gray-200'
-                  }`}
-                />
-                {errors.evidenceValue && (
-                  <p className="mt-1 text-sm text-red-600" role="alert">
-                    {errors.evidenceValue}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Usuarios Section */}
@@ -952,11 +903,66 @@ export default function GroupSaleForm() {
                     onClick={() => removeUser(index)}
                     className="text-red-600 border-red-600 hover:bg-red-50 px-3 py-3"
                   >
-                    Eliminar
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Evidence Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-900">Evidencia de la transacción</h3>
+          
+          <div className="w-1/2 flex gap-4">
+            {/* Evidence Type Select */}
+            <div className="flex-1">
+              <label htmlFor="evidence-type" className="sr-only">
+                Evidencia de la transacción
+              </label>
+              <select
+                id="evidence-type"
+                value={formData.evidenceType}
+                onChange={(e) => setFormData(prev => ({ ...prev, evidenceType: e.target.value, evidenceValue: '' }))}
+                className="w-full px-3 py-3 bg-[#E8EDF5] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[#4A739C]"
+              >
+                <option value="" className="text-[#4A739C]">Evidencia de la transacción</option>
+                {evidenceTypes.map(et => (
+                  <option key={et.id} value={et.id} className="text-[#4A739C]">
+                    {et.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Evidence Value Input */}
+            {formData.evidenceType && (
+              <div className="flex-1">
+                <label htmlFor="evidence-value" className="sr-only">
+                  {formData.evidenceType === 'url' ? 'URL' : 'Número de transacción'}
+                </label>
+                <input
+                  id="evidence-value"
+                  type="text"
+                  value={formData.evidenceValue}
+                  onChange={(e) => setFormData(prev => ({ ...prev, evidenceValue: e.target.value }))}
+                  placeholder={
+                    formData.evidenceType === 'url' 
+                      ? 'Pega la URL...'
+                      : 'Número de transacción...'
+                  }
+                  className={`w-full px-3 py-3 bg-[#E8EDF5] border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-[#4A739C] text-[#4A739C] ${
+                    errors.evidenceValue ? 'border-red-300' : 'border-gray-200'
+                  }`}
+                />
+                {errors.evidenceValue && (
+                  <p className="mt-1 text-sm text-red-600" role="alert">
+                    {errors.evidenceValue}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
         
@@ -967,6 +973,7 @@ export default function GroupSaleForm() {
             variant="outline"
             onClick={() => router.back()}
             disabled={saving}
+            className="text-red-600 border-red-600 hover:bg-red-50"
           >
             Cancelar
           </Button>

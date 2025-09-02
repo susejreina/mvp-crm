@@ -825,6 +825,7 @@ export default function IndividualSaleForm() {
             variant="outline"
             onClick={() => router.back()}
             disabled={saving}
+            className="text-red-600 border-red-600 hover:bg-red-50"
           >
             Cancelar
           </Button>
