@@ -25,7 +25,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     const unsub = authService.onAuthStateChanged((user: AuthUser | null) => {
-      if (user) router.replace('/hola');
+      if (user) router.replace('/dashboard');
     });
     return unsub;
   }, [router]);
