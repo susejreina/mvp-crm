@@ -36,7 +36,7 @@ export default function SalesFilters({
     return () => clearTimeout(timeoutId);
   }, [searchText]);
 
-  const handleFilterChange = (key: keyof SalesQueryFilters, value: any) => {
+  const handleFilterChange = (key: keyof SalesQueryFilters, value: string | Date | undefined) => {
     onFiltersChange({
       ...filters,
       [key]: value || undefined

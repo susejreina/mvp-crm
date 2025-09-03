@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
@@ -15,13 +15,12 @@ import {
   fetchSalesPage,
   getSalesStats,
   fetchAllSalesForExport,
-  saleToRow,
-  filterSalesByText
+  saleToRow
 } from '../../../lib/sales/query';
 import { exportSalesToCSV } from '../../../lib/utils/csvExport';
 import { getProducts } from '../../../lib/firestore/sales';
 import { getActiveClients } from '../../../lib/firestore/clients';
-import { Product, Client } from '../../../lib/types';
+import { Product, Client, Sale } from '../../../lib/types';
 
 export default function VentasPage() {
   const router = useRouter();
@@ -32,7 +31,7 @@ export default function VentasPage() {
   const [exporting, setExporting] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [vendors, setVendors] = useState<Client[]>([]);
-  const [sales, setSales] = useState<any[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
   const [stats, setStats] = useState({
     pendingCount: 0,
     approvedCount: 0,
@@ -45,7 +44,7 @@ export default function VentasPage() {
   const [pageSize, setPageSize] = useState(25);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPrevPage, setHasPrevPage] = useState(false);
-  const [cursors, setCursors] = useState<{
+  const cursorsRef = useRef<{
     [key: number]: QueryDocumentSnapshot<DocumentData>
   }>({});
 
@@ -55,7 +54,7 @@ export default function VentasPage() {
       text: searchParams.get('search') || undefined,
       productId: searchParams.get('product') || undefined,
       vendorId: searchParams.get('vendor') || undefined,
-      status: searchParams.get('status') as any || undefined,
+      status: (searchParams.get('status') as 'pending' | 'approved' | 'rejected') || undefined,
       dateFrom: searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')!) : undefined,
       dateTo: searchParams.get('dateTo') ? new Date(searchParams.get('dateTo')!) : undefined,
       sortBy: (searchParams.get('sortBy') as SortableField) || 'date',
@@ -111,7 +110,7 @@ export default function VentasPage() {
     setLoading(true);
     try {
       // Get cursor for the page
-      const cursor = page > 1 ? cursors[page - 1] : undefined;
+      const cursor = page > 1 ? cursorsRef.current[page - 1] : undefined;
       
       const result = await fetchSalesPage(newFilters, {
         pageSize: newPageSize,
@@ -119,19 +118,14 @@ export default function VentasPage() {
         direction: cursor ? 'next' : undefined
       });
 
-      // Apply text filtering client-side if needed
-      let salesData = result.sales;
-      if (newFilters.text) {
-        salesData = filterSalesByText(salesData, newFilters.text);
-      }
-
-      setSales(salesData);
+      // Text filtering is now handled in fetchSalesPage
+      setSales(result.sales);
       setHasNextPage(result.hasNextPage);
       setHasPrevPage(page > 1);
 
       // Update cursors
       if (result.nextCursor) {
-        setCursors(prev => ({ ...prev, [page]: result.nextCursor! }));
+        cursorsRef.current = { ...cursorsRef.current, [page]: result.nextCursor };
       }
 
       // Load stats
@@ -147,7 +141,7 @@ export default function VentasPage() {
     } finally {
       setLoading(false);
     }
-  }, [pageSize, cursors]);
+  }, [pageSize]);
 
   // Load data when filters change
   useEffect(() => {
@@ -164,7 +158,7 @@ export default function VentasPage() {
   const handleFiltersChange = (newFilters: SalesQueryFilters) => {
     setFilters(newFilters);
     setCurrentPage(1);
-    setCursors({}); // Reset cursors when filters change
+    cursorsRef.current = {}; // Reset cursors when filters change
     updateURL(newFilters, 1, pageSize);
   };
 
@@ -208,7 +202,7 @@ export default function VentasPage() {
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
     setCurrentPage(1);
-    setCursors({}); // Reset cursors when page size changes
+    cursorsRef.current = {}; // Reset cursors when page size changes
     updateURL(filters, 1, newPageSize);
   };
 

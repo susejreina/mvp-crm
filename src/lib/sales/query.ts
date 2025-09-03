@@ -72,34 +72,11 @@ export interface SaleRow {
 export function buildSalesQuery(filters: SalesQueryFilters): Query<DocumentData> {
   const salesRef = collection(db, 'sales');
   let q = query(salesRef);
+  
 
-  // Apply filters
-  if (filters.productId) {
-    q = query(q, where('productId', '==', filters.productId));
-  }
-
-  if (filters.vendorId) {
-    q = query(q, where('vendorId', '==', filters.vendorId));
-  }
-
-  if (filters.status) {
-    q = query(q, where('status', '==', filters.status));
-  }
-
-  if (filters.dateFrom || filters.dateTo) {
-    if (filters.dateFrom && filters.dateTo) {
-      q = query(q, 
-        where('date', '>=', Timestamp.fromDate(filters.dateFrom)),
-        where('date', '<=', Timestamp.fromDate(filters.dateTo))
-      );
-    } else if (filters.dateFrom) {
-      q = query(q, where('date', '>=', Timestamp.fromDate(filters.dateFrom)));
-    } else if (filters.dateTo) {
-      q = query(q, where('date', '<=', Timestamp.fromDate(filters.dateTo)));
-    }
-  }
-
-  // Apply sorting
+  // To completely avoid composite index requirements, we'll use minimal queries
+  // and handle most filtering client-side
+  
   const sortField = filters.sortBy || 'date';
   const sortDirection = filters.sortDir || 'desc';
   
@@ -115,9 +92,115 @@ export function buildSalesQuery(filters: SalesQueryFilters): Query<DocumentData>
     status: 'status'
   };
 
-  q = query(q, orderBy(fieldMap[sortField], sortDirection));
+  // Only apply sorting if no filters are present, OR if we're only filtering by the same field we're sorting by
+  const hasFilters = !!(filters.status || filters.productId || filters.vendorId || filters.dateFrom || filters.dateTo);
+  
+  if (!hasFilters) {
+    // No filters - safe to sort
+    q = query(q, orderBy(fieldMap[sortField], sortDirection));
+  } else if (filters.status && sortField === 'status') {
+    // Filtering and sorting by status - single field index
+    q = query(q, where('status', '==', filters.status), orderBy('status', sortDirection));
+  } else if (filters.status) {
+    // Only filter by status, no sorting
+    q = query(q, where('status', '==', filters.status));
+  } else {
+    // For other filters, just sort by a basic field to ensure consistent ordering
+    q = query(q, orderBy('date', 'desc'));
+  }
 
   return q;
+}
+
+/**
+ * Client-side filter to apply additional filters that weren't applied at database level
+ */
+function applyClientFilters(sales: Sale[], filters: SalesQueryFilters): Sale[] {
+  let filtered = sales;
+
+  // Apply text search filter
+  if (filters.text) {
+    filtered = filterSalesByText(filtered, filters.text);
+  }
+
+  // Apply all filters client-side (except status which might be applied at DB level)
+  if (filters.productId) {
+    filtered = filtered.filter(sale => sale.productId === filters.productId);
+  }
+
+  if (filters.vendorId) {
+    filtered = filtered.filter(sale => sale.vendorId === filters.vendorId);
+  }
+
+  if (filters.dateFrom) {
+    filtered = filtered.filter(sale => {
+      const saleDate = sale.date instanceof Timestamp ? sale.date.toDate() : new Date(sale.date as string | Date);
+      return saleDate >= filters.dateFrom!;
+    });
+  }
+
+  if (filters.dateTo) {
+    filtered = filtered.filter(sale => {
+      const saleDate = sale.date instanceof Timestamp ? sale.date.toDate() : new Date(sale.date as string | Date);
+      return saleDate <= filters.dateTo!;
+    });
+  }
+
+  // Apply client-side sorting if needed
+  const sortField = filters.sortBy || 'date';
+  const sortDirection = filters.sortDir || 'desc';
+  const hasFilters = !!(filters.status || filters.productId || filters.vendorId || filters.dateFrom || filters.dateTo);
+  
+  if (hasFilters && !(filters.status && sortField === 'status')) {
+    // Need to sort client-side
+    filtered.sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+      
+      switch (sortField) {
+        case 'customerName':
+          aValue = a.customerName;
+          bValue = b.customerName;
+          break;
+        case 'customerEmail':
+          aValue = a.customerEmail;
+          bValue = b.customerEmail;
+          break;
+        case 'productName':
+          aValue = a.productName;
+          bValue = b.productName;
+          break;
+        case 'vendorName':
+          aValue = a.vendorName;
+          bValue = b.vendorName;
+          break;
+        case 'date':
+          aValue = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date as string | Date);
+          bValue = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date as string | Date);
+          break;
+        case 'paymentMethod':
+          aValue = a.paymentMethod;
+          bValue = b.paymentMethod;
+          break;
+        case 'usdAmount':
+          aValue = a.usdAmount;
+          bValue = b.usdAmount;
+          break;
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  return filtered;
 }
 
 /**
@@ -142,7 +225,7 @@ export async function fetchSalesPage(
     }
 
     const snapshot = await getDocs(q);
-    const sales: Sale[] = [];
+    let sales: Sale[] = [];
     
     snapshot.forEach(doc => {
       sales.push({
@@ -150,6 +233,9 @@ export async function fetchSalesPage(
         ...doc.data()
       } as Sale);
     });
+
+    // Apply additional client-side filters
+    sales = applyClientFilters(sales, filters);
 
     // Get cursors for pagination
     const firstDoc = snapshot.docs[0];
@@ -190,14 +276,48 @@ export function filterSalesByText(sales: Sale[], searchText: string): Sale[] {
  * Convert Sale to SaleRow for table display
  */
 export function saleToRow(sale: Sale): SaleRow {
+  // Handle both Timestamp objects and already converted Date objects
+  let saleDate: Timestamp;
+  let dateObject: Date;
+  
+  try {
+    if (sale.date instanceof Timestamp) {
+      saleDate = sale.date;
+    } else {
+      // Handle various date formats
+      const inputDate = sale.date as string | Date;
+      const parsedDate = new Date(inputDate);
+      
+      if (isNaN(parsedDate.getTime())) {
+        // If parsing fails, use current date as fallback
+        console.warn('Invalid date found in sale:', sale.id, 'date:', sale.date);
+        parsedDate.setTime(Date.now());
+      }
+      
+      saleDate = Timestamp.fromDate(parsedDate);
+    }
+    
+    dateObject = saleDate.toDate();
+    
+    // Verify the date is valid
+    if (isNaN(dateObject.getTime())) {
+      throw new Error('Invalid date object');
+    }
+  } catch (error) {
+    console.error('Error processing date for sale:', sale.id, error);
+    // Fallback to current date
+    saleDate = Timestamp.now();
+    dateObject = new Date();
+  }
+  
   return {
     id: sale.id,
     customerName: sale.customerName,
     customerEmail: sale.customerEmail,
     productName: sale.productName,
     vendorName: sale.vendorName,
-    saleDate: sale.date,
-    saleDateISO: sale.date.toDate().toISOString().split('T')[0],
+    saleDate: saleDate,
+    saleDateISO: dateObject.toISOString().split('T')[0],
     paymentMethod: sale.paymentMethod,
     amountUsd: sale.usdAmount,
     status: sale.status,
