@@ -1,4 +1,4 @@
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Vendor } from '../types';
 
@@ -58,5 +58,31 @@ export async function getVendorByEmail(email: string): Promise<Vendor | null> {
   } catch (error) {
     console.error('Error getting vendor by email:', error);
     return null;
+  }
+}
+
+/**
+ * Update vendor's Google profile photo URL
+ */
+export async function updateVendorGooglePhoto(email: string, photoUrl: string | null): Promise<void> {
+  try {
+    const vendorId = email.toLowerCase()
+      .replace(/[^a-z0-9@.]/g, '-')
+      .replace(/@/g, '-')
+      .replace(/\./g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    const vendorRef = doc(db, 'vendors', vendorId);
+    const vendorSnap = await getDoc(vendorRef);
+    
+    if (vendorSnap.exists()) {
+      await updateDoc(vendorRef, {
+        googlePhotoUrl: photoUrl,
+        updatedAt: Timestamp.now(),
+      });
+    }
+  } catch (error) {
+    console.error('Error updating vendor Google photo:', error);
   }
 }

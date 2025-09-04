@@ -70,9 +70,8 @@ interface ConfirmationModalProps {
   onCancel: () => void;
 }
 
-interface SuccessModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface IndividualSaleFormProps {
+  onSuccess?: (message: string) => void;
 }
 
 function ConfirmationModal({ isOpen, oldClientName, newEmail, onConfirm, onCancel }: ConfirmationModalProps) {
@@ -101,45 +100,12 @@ function ConfirmationModal({ isOpen, oldClientName, newEmail, onConfirm, onCance
   );
 }
 
-function SuccessModal({ isOpen, onClose }: SuccessModalProps) {
-  if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full">
-        <div className="flex items-center mb-4">
-          <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-          </div>
-          <div className="ml-3">
-            <h3 className="text-lg font-medium text-gray-900">
-              Venta Registrada
-            </h3>
-          </div>
-        </div>
-        <p className="text-sm text-gray-600 mb-6">
-          La venta ha sido registrada exitosamente en el sistema.
-        </p>
-        <div className="flex justify-end">
-          <Button onClick={onClose}>
-            Aceptar
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function IndividualSaleForm() {
+export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState<FormData | null>(null);
   
   // Data
@@ -417,8 +383,9 @@ export default function IndividualSaleForm() {
         lastPurchaseAt: Timestamp.fromDate(new Date(data.saleDate))
       });
       
-      // Success - show modal and redirect to dashboard
-      setShowSuccess(true);
+      // Success - show toast and redirect to dashboard
+      onSuccess?.('Venta registrada correctamente');
+      router.push('/dashboard');
       
     } catch (error) {
       console.error('Error creating sale:', error);
@@ -856,14 +823,6 @@ export default function IndividualSaleForm() {
         }}
       />
 
-      {/* Success Modal */}
-      <SuccessModal
-        isOpen={showSuccess}
-        onClose={() => {
-          setShowSuccess(false);
-          router.push('/dashboard');
-        }}
-      />
       
       {/* Click outside to close suggestions */}
       {showClientSuggestions && (

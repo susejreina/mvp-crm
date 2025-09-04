@@ -12,7 +12,6 @@ interface AddVendorModalProps {
     name: string;
     email: string;
     role: 'admin' | 'seller';
-    position: string;
   }) => Promise<void>;
 }
 
@@ -21,13 +20,11 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
     name: '',
     email: '',
     role: 'seller' as 'admin' | 'seller',
-    position: '',
   });
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
     role?: string;
-    position?: string;
   }>({});
   const [loading, setLoading] = useState(false);
 
@@ -56,10 +53,6 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
       newErrors.role = 'El rol es requerido';
     }
 
-    // Position validation
-    if (!formData.position.trim()) {
-      newErrors.position = 'El cargo es requerido';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -74,7 +67,10 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
 
     setLoading(true);
     try {
-      await onSubmit(formData);
+      await onSubmit({
+        ...formData,
+        position: 'Vendedor'
+      });
       // Modal will be closed by parent component after successful submission
     } catch (error) {
       // Error handling is done in parent component
@@ -151,18 +147,6 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
             />
           </div>
 
-          {/* Position Field */}
-          <div>
-            <Input
-              label="Cargo"
-              type="text"
-              value={formData.position}
-              onChange={(e) => handleInputChange('position', e.target.value)}
-              error={errors.position}
-              placeholder="Ej: Director Comercial, Gerente de Ventas"
-              required
-            />
-          </div>
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-4">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { authService, type AuthUser, AuthServiceError } from '@/lib/auth/service';
-import { isValidVendorAdmin } from '@/lib/firestore/auth';
+import { isValidVendorAdmin, updateVendorGooglePhoto } from '@/lib/firestore/auth';
 import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
@@ -92,6 +92,11 @@ export default function LoginPage() {
           // Sign out the user
           await authService.signOut();
           return;
+        }
+        
+        // Update Google profile photo if available
+        if (result.user.photoURL) {
+          await updateVendorGooglePhoto(result.user.email, result.user.photoURL);
         }
         
         // User is valid vendor admin, redirect to dashboard

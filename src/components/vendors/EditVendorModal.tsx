@@ -5,7 +5,9 @@ import { X } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import ProfileImageUpload from '../ui/ProfileImageUpload';
 import { Vendor } from '@/lib/types';
+import { updateVendorProfileImageBase64, removeVendorProfileImageBase64 } from '@/lib/firestore/imageUtils';
 
 interface EditVendorModalProps {
   vendor: Vendor | null;
@@ -16,9 +18,10 @@ interface EditVendorModalProps {
     role: 'admin' | 'seller';
     position: string;
   }) => Promise<void>;
+  onImageUpdate?: () => Promise<void>;
 }
 
-export default function EditVendorModal({ vendor, onClose, onSubmit }: EditVendorModalProps) {
+export default function EditVendorModal({ vendor, onClose, onSubmit, onImageUpdate }: EditVendorModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -111,6 +114,31 @@ export default function EditVendorModal({ vendor, onClose, onSubmit }: EditVendo
     }
   };
 
+  const handleImageUpload = async (file: File): Promise<string> => {
+    if (!vendor) throw new Error('No vendor selected');
+    
+    try {
+      const imageUrl = await updateVendorProfileImageBase64(vendor.id, file);
+      // Refresh vendor data in parent
+      await onImageUpdate?.();
+      return imageUrl;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleImageRemove = async (): Promise<void> => {
+    if (!vendor) return;
+    
+    try {
+      await removeVendorProfileImageBase64(vendor.id);
+      // Refresh vendor data in parent
+      await onImageUpdate?.();
+    } catch (error) {
+      throw error;
+    }
+  };
+
   if (!vendor) {
     return null;
   }
@@ -127,6 +155,17 @@ export default function EditVendorModal({ vendor, onClose, onSubmit }: EditVendo
           >
             <X className="h-5 w-5" />
           </button>
+        </div>
+
+        {/* Profile Image Upload */}
+        <div className="mb-6">
+          <ProfileImageUpload
+            currentImageUrl={vendor.photoUrl}
+            googleImageUrl={vendor.googlePhotoUrl}
+            userName={vendor.name}
+            onImageUpload={handleImageUpload}
+            onImageRemove={handleImageRemove}
+          />
         </div>
 
         {/* Form */}

@@ -1,13 +1,17 @@
+'use client';
+
+import { useState } from 'react';
 import { Metadata } from 'next';
 import IndividualSaleForm from '../../../../../components/sales/IndividualSaleForm';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
-
-export const metadata: Metadata = {
-  title: 'Registrar Venta Individual | Academia de IA CRM',
-  description: 'Registrar una nueva venta individual en el sistema CRM',
-};
+import Toast from '../../../../../components/ui/Toast';
 
 export default function IndividualSalePage() {
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
@@ -29,8 +33,17 @@ export default function IndividualSalePage() {
         </div>
 
         {/* Form */}
-        <IndividualSaleForm />
+        <IndividualSaleForm onSuccess={(message) => setToast({ message, type: 'success' })} />
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

@@ -86,7 +86,7 @@ export default function AuthGate({ children, fallback }: AuthGateProps) {
   }
 
   if (!user || !isValidVendor) {
-    return null; // El useEffect ya redirige a /login
+    return null; // The useEffect already redirects to /login
   }
 
   return <>{children}</>;

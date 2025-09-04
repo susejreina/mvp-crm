@@ -5,6 +5,8 @@ export interface Vendor {
   name: string;
   email: string;
   photoUrl?: string;
+  googlePhotoUrl?: string; // Google profile image
+  hasCustomPhoto?: boolean; // Whether user uploaded custom image
   role: 'admin' | 'seller';
   position?: string;
   active: boolean;

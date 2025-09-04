@@ -3,9 +3,9 @@ import { collection, writeBatch, doc, Timestamp } from 'firebase/firestore';
 import { Vendor, slugifyEmail } from '../types';
 
 const demoVendors: Omit<Vendor, 'id' | 'createdAt'>[] = [
-  { name: 'Angela Ojeda', email: 'angela@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=angela', role: 'admin', active: true },
-  { name: 'Angelica Bou', email: 'angelica@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=angelica', role: 'seller', active: true },
-  { name: 'Carlos Rodriguez', email: 'carlos@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=carlos', role: 'seller', active: true },
+  { name: 'Angela Ojeda', email: 'angela@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=angela', role: 'admin', position: 'Director Comercial', active: true },
+  { name: 'Angelica Bou', email: 'angelica@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=angelica', role: 'seller', position: 'Vendedor', active: true },
+  { name: 'Carlos Rodriguez', email: 'carlos@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=carlos', role: 'seller', position: 'Vendedor', active: true },
 ];
 
 export async function seedVendors() {

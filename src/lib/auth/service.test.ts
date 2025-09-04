@@ -116,7 +116,7 @@ describe('AuthService', () => {
         displayName: 'Test User',
         photoURL: 'https://example.com/photo.jpg',
       });
-      expect(signInWithPopup).toHaveBeenCalled(); // opcional: verificar args concretos
+      expect(signInWithPopup).toHaveBeenCalled(); // optional: verify specific args
     });
 
     it('should handle popup closed error', async () => {

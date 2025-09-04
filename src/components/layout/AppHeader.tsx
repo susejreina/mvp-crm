@@ -5,7 +5,10 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { authService } from '@/lib/auth/service';
+import { getVendorByEmail } from '@/lib/firestore/auth';
+import { Vendor } from '@/lib/types';
 import { LogOut, ChevronDown } from 'lucide-react';
+import Avatar from '../ui/Avatar';
 
 const navigation = [
   { name: 'Escritorio', href: '/dashboard' },
@@ -18,6 +21,7 @@ const navigation = [
 export default function AppHeader() {
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -33,6 +37,25 @@ export default function AppHeader() {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [dropdownOpen]);
+
+  // Load current vendor data
+  useEffect(() => {
+    const loadCurrentVendor = async () => {
+      const user = await new Promise((resolve) => {
+        const unsubscribe = authService.onAuthStateChanged((user) => {
+          unsubscribe();
+          resolve(user);
+        });
+      });
+
+      if (user && (user as any).email) {
+        const vendor = await getVendorByEmail((user as any).email);
+        setCurrentVendor(vendor);
+      }
+    };
+
+    loadCurrentVendor();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -90,8 +113,19 @@ export default function AppHeader() {
                 aria-expanded={dropdownOpen}
                 aria-haspopup="true"
               >
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-2">
-                  <span className="text-gray-600 text-sm">👤</span>
+                <div className="mr-2">
+                  {currentVendor ? (
+                    <Avatar
+                      src={currentVendor.photoUrl}
+                      googleSrc={currentVendor.googlePhotoUrl}
+                      name={currentVendor.name}
+                      size="sm"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                      <span className="text-gray-600 text-sm">👤</span>
+                    </div>
+                  )}
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               </button>

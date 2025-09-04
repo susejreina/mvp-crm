@@ -7,6 +7,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Toast from '../../../components/ui/Toast';
+import Avatar from '../../../components/ui/Avatar';
 import AddVendorModal from '../../../components/vendors/AddVendorModal';
 import EditVendorModal from '../../../components/vendors/EditVendorModal';
 import { getAllVendors, createVendor, updateVendor, updateVendorRole, toggleVendorStatus } from '../../../lib/firestore/vendors';
@@ -85,7 +86,7 @@ export default function VendorsPage() {
     name: string;
     email: string;
     role: 'admin' | 'seller';
-    position: string;
+    position?: string;
   }) => {
     try {
       await createVendor(vendorData);
@@ -306,15 +307,27 @@ export default function VendorsPage() {
                   filteredVendors.map((vendor) => (
                     <tr key={vendor.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-medium flex items-center ${
-                          vendor.active ? 'text-gray-900' : 'text-gray-400'
-                        }`}>
-                          {vendor.name}
-                          {!vendor.active && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                              Inactivo
-                            </span>
-                          )}
+                        <div className="flex items-center">
+                          <div className="mr-3">
+                            <Avatar
+                              src={vendor.photoUrl}
+                              googleSrc={vendor.googlePhotoUrl}
+                              name={vendor.name}
+                              size="sm"
+                            />
+                          </div>
+                          <div>
+                            <div className={`text-sm font-medium ${
+                              vendor.active ? 'text-gray-900' : 'text-gray-400'
+                            }`}>
+                              {vendor.name}
+                            </div>
+                            {!vendor.active && (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                Inactivo
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -406,6 +419,7 @@ export default function VendorsPage() {
             setEditingVendor(null);
           }}
           onSubmit={handleUpdateVendor}
+          onImageUpdate={loadVendors}
         />
       )}
 

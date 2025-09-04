@@ -9,6 +9,7 @@ import { Vendor } from '@/lib/types';
 import KpiCard from '@/components/dashboard/KpiCard';
 import QuickActionCard from '@/components/dashboard/QuickActionCard';
 import SaleKindModal from '@/components/sales/SaleKindModal';
+import Avatar from '@/components/ui/Avatar';
 
 interface DashboardMetrics {
   totalApprovedUsd: number;
@@ -141,13 +142,25 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Hola {currentVendor ? currentVendor.name : 'Usuario'}
-        </h1>
-        <p className="text-gray-600">
-          {currentVendor?.position || 'Sin cargo asignado'}
-        </p>
+      <div className="mb-8 flex items-center">
+        <div className="mr-4">
+          {currentVendor && (
+            <Avatar
+              src={currentVendor.photoUrl}
+              googleSrc={currentVendor.googlePhotoUrl}
+              name={currentVendor.name}
+              size="lg"
+            />
+          )}
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Hola {currentVendor ? currentVendor.name : 'Usuario'}
+          </h1>
+          <p className="text-gray-600">
+            {currentVendor?.position || 'Sin cargo asignado'}
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

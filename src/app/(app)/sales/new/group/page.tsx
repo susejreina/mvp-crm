@@ -1,13 +1,15 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useState } from 'react';
 import GroupSaleForm from '../../../../../components/sales/GroupSaleForm';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
-
-export const metadata: Metadata = {
-  title: 'Registrar Venta Grupal | Academia de IA CRM',
-  description: 'Registrar una nueva venta grupal en el sistema CRM',
-};
+import Toast from '../../../../../components/ui/Toast';
 
 export default function GroupSalePage() {
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
@@ -29,8 +31,17 @@ export default function GroupSalePage() {
         </div>
 
         {/* Form */}
-        <GroupSaleForm />
+        <GroupSaleForm onSuccess={(message) => setToast({ message, type: 'success' })} />
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

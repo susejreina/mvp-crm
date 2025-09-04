@@ -2,16 +2,16 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 
-// Mock CSS concreto (no globs)
+// Mock specific CSS (no globs)
 vi.mock('@/app/globals.css', () => ({}));
 
-// Router de Next
+// Next.js Router
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
   usePathname: () => '/',
 }));
 
-// next/image: quita props no válidos del DOM
+// next/image: remove invalid props from DOM
 vi.mock('next/image', () => ({
   __esModule: true,
   default: (props: any) => {
@@ -32,7 +32,7 @@ vi.mock('firebase/auth', async () => {
     signInWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'u1', email: 'a@b.com' } })),
     sendPasswordResetEmail: vi.fn(async () => ({})),
     onAuthStateChanged: vi.fn((auth: any, cb: any) => {
-      // No user por defecto
+      // No default user
       cb(null);
       return () => {};
     }),

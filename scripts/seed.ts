@@ -3,7 +3,7 @@
 import { config } from 'dotenv';
 import path from 'path';
 
-// Carga .env.local desde la raíz del repo
+// Load .env.local from repo root
 config({ path: path.resolve(process.cwd(), '.env.local') });
 
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -39,13 +39,13 @@ async function main() {
   const password = process.env.SEED_ADMIN_PASSWORD;
 
   console.log('Variables:', {
-    email: email ? 'OK' : 'FALTA',
-    password: password ? 'OK' : 'FALTA',
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'OK' : 'FALTA',
+    email: email ? 'OK' : 'MISSING',
+    password: password ? 'OK' : 'MISSING',
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'OK' : 'MISSING',
   });
 
   if (!email || !password) {
-    console.error('Faltan SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD en .env.local');
+    console.error('Missing SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD in .env.local');
     process.exit(1);
   }
 
@@ -70,7 +70,7 @@ async function main() {
   }
 
   try {
-    console.log('Autenticando con Firebase Auth...');
+    console.log('Authenticating with Firebase Auth...');
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const adminUid = cred.user.uid;
     console.log('OK. Admin UID:', adminUid);
@@ -78,9 +78,9 @@ async function main() {
     await runAllSeeds({ adminUid, reset: resetOptions });
 
     await signOut(auth);
-    console.log('Seed completado ✅');
+    console.log('Seed completed ✅');
   } catch (err: any) {
-    console.error('Error durante el seed:', err?.message ?? err);
+    console.error('Error during seed:', err?.message ?? err);
     process.exit(1);
   }
 }

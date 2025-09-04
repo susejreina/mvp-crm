@@ -41,7 +41,7 @@ class AuthServiceImpl implements IAuthService {
 
   constructor() {
     this.googleProvider = new GoogleAuthProvider();
-    // Evita romper si el mock no implementa addScope:
+    // Avoid breaking if the mock doesn't implement addScope:
     (this.googleProvider as any)?.addScope?.('email');
     (this.googleProvider as any)?.addScope?.('profile');
   }
@@ -91,6 +91,6 @@ class AuthServiceImpl implements IAuthService {
 
 export const authService: IAuthService = new AuthServiceImpl();
 
-// 👇 IMPORTANTE: exporta la CLASE real (no solo el type)
-// para que `expect(e).toBeInstanceOf(AuthServiceError)` funcione
+// 👇 IMPORTANT: export the real CLASS (not just the type)
+// so that `expect(e).toBeInstanceOf(AuthServiceError)` works
 export { AuthServiceError } from './errors';

@@ -1,6 +1,7 @@
 import { collection, getDocs, query, where, doc, setDoc, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Vendor } from '../types';
+import { uploadProfileImage, deleteProfileImage } from './storage';
 
 /**
  * Get all active vendors for autocomplete
@@ -37,7 +38,7 @@ export async function createVendor(vendorData: {
   name: string;
   email: string;
   role: 'admin' | 'seller';
-  position: string;
+  position?: string;
 }): Promise<void> {
   // Generate vendor ID from email (slug format)
   const vendorId = vendorData.email.toLowerCase()
@@ -53,7 +54,7 @@ export async function createVendor(vendorData: {
     name: vendorData.name,
     email: vendorData.email,
     role: vendorData.role,
-    position: vendorData.position,
+    position: vendorData.position || 'Vendedor',
     active: true,
     createdAt: Timestamp.now(),
   });
@@ -96,4 +97,51 @@ export async function toggleVendorStatus(vendorId: string, active: boolean): Pro
     active,
     updatedAt: Timestamp.now(),
   });
+}
+
+/**
+ * Update vendor profile image
+ */
+export async function updateVendorProfileImage(
+  vendorId: string, 
+  imageFile: File
+): Promise<string> {
+  try {
+    // Upload new image to Firebase Storage
+    const imageUrl = await uploadProfileImage(vendorId, imageFile);
+    
+    // Update vendor document with new image URL
+    const vendorRef = doc(db, 'vendors', vendorId);
+    await updateDoc(vendorRef, {
+      photoUrl: imageUrl,
+      hasCustomPhoto: true,
+      updatedAt: Timestamp.now(),
+    });
+    
+    return imageUrl;
+  } catch (error) {
+    console.error('Error updating vendor profile image:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove vendor profile image
+ */
+export async function removeVendorProfileImage(vendorId: string): Promise<void> {
+  try {
+    // Delete image from Firebase Storage
+    await deleteProfileImage(vendorId);
+    
+    // Update vendor document to remove image URL
+    const vendorRef = doc(db, 'vendors', vendorId);
+    await updateDoc(vendorRef, {
+      photoUrl: null,
+      hasCustomPhoto: false,
+      updatedAt: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error('Error removing vendor profile image:', error);
+    throw error;
+  }
 }
