@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import { Vendor } from '@/lib/types';
 
-interface AddVendorModalProps {
+interface EditVendorModalProps {
+  vendor: Vendor | null;
   onClose: () => void;
-  onSubmit: (vendor: {
+  onSubmit: (vendorId: string, vendorData: {
     name: string;
     email: string;
     role: 'admin' | 'seller';
@@ -16,7 +18,7 @@ interface AddVendorModalProps {
   }) => Promise<void>;
 }
 
-export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProps) {
+export default function EditVendorModal({ vendor, onClose, onSubmit }: EditVendorModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -30,6 +32,18 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
     position?: string;
   }>({});
   const [loading, setLoading] = useState(false);
+
+  // Initialize form data when vendor prop changes
+  useEffect(() => {
+    if (vendor) {
+      setFormData({
+        name: vendor.name || '',
+        email: vendor.email || '',
+        role: vendor.role || 'seller',
+        position: vendor.position || '',
+      });
+    }
+  }, [vendor]);
 
   const roleOptions = [
     { value: 'admin', label: 'Administrador' },
@@ -68,13 +82,13 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (!validateForm() || !vendor) {
       return;
     }
 
     setLoading(true);
     try {
-      await onSubmit(formData);
+      await onSubmit(vendor.id, formData);
       // Modal will be closed by parent component after successful submission
     } catch (error) {
       // Error handling is done in parent component
@@ -97,12 +111,16 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
     }
   };
 
+  if (!vendor) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Agregar Vendedor</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Editar Vendedor</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
@@ -136,6 +154,7 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
               error={errors.email}
               placeholder="ejemplo@dominio.com"
               required
+              disabled
             />
           </div>
 
@@ -179,7 +198,7 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
               loading={loading}
               disabled={loading}
             >
-              Guardar
+              Actualizar
             </Button>
           </div>
         </form>

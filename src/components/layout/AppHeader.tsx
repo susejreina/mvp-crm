@@ -1,6 +1,11 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
+import { authService } from '@/lib/auth/service';
+import { LogOut, ChevronDown } from 'lucide-react';
 
 const navigation = [
   { name: 'Escritorio', href: '/dashboard' },
@@ -12,6 +17,31 @@ const navigation = [
 
 export default function AppHeader() {
   const pathname = usePathname();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [dropdownOpen]);
+
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      // AuthGate will handle redirecting to login
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <header className="bg-white shadow">
@@ -51,10 +81,35 @@ export default function AppHeader() {
             })}
           </nav>
 
-          {/* User Avatar */}
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-gray-600 text-sm">👤</span>
+          {/* User Menu */}
+          <div className="flex items-center relative">
+            <div ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                aria-expanded={dropdownOpen}
+                aria-haspopup="true"
+              >
+                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-2">
+                  <span className="text-gray-600 text-sm">👤</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      handleLogout();
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

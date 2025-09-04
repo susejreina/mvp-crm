@@ -37,6 +37,7 @@ export async function createVendor(vendorData: {
   name: string;
   email: string;
   role: 'admin' | 'seller';
+  position: string;
 }): Promise<void> {
   // Generate vendor ID from email (slug format)
   const vendorId = vendorData.email.toLowerCase()
@@ -52,6 +53,7 @@ export async function createVendor(vendorData: {
     name: vendorData.name,
     email: vendorData.email,
     role: vendorData.role,
+    position: vendorData.position,
     active: true,
     createdAt: Timestamp.now(),
   });
@@ -64,6 +66,23 @@ export async function updateVendorRole(vendorId: string, role: 'admin' | 'seller
   const vendorRef = doc(db, 'vendors', vendorId);
   await updateDoc(vendorRef, {
     role,
+    updatedAt: Timestamp.now(),
+  });
+}
+
+/**
+ * Update vendor information
+ */
+export async function updateVendor(vendorId: string, vendorData: {
+  name: string;
+  role: 'admin' | 'seller';
+  position: string;
+}): Promise<void> {
+  const vendorRef = doc(db, 'vendors', vendorId);
+  await updateDoc(vendorRef, {
+    name: vendorData.name,
+    role: vendorData.role,
+    position: vendorData.position,
     updatedAt: Timestamp.now(),
   });
 }

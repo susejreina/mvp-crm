@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, MoreHorizontal, Search, Eye, UserX, UserCheck } from 'lucide-react';
+import { Plus, MoreHorizontal, Search, Eye, UserX, UserCheck, Edit } from 'lucide-react';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Toast from '../../../components/ui/Toast';
 import AddVendorModal from '../../../components/vendors/AddVendorModal';
-import { getAllVendors, createVendor, updateVendorRole, toggleVendorStatus } from '../../../lib/firestore/vendors';
+import EditVendorModal from '../../../components/vendors/EditVendorModal';
+import { getAllVendors, createVendor, updateVendor, updateVendorRole, toggleVendorStatus } from '../../../lib/firestore/vendors';
 import { Vendor } from '../../../lib/types';
 
 export default function VendorsPage() {
@@ -18,6 +19,8 @@ export default function VendorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     message: string;
@@ -82,6 +85,7 @@ export default function VendorsPage() {
     name: string;
     email: string;
     role: 'admin' | 'seller';
+    position: string;
   }) => {
     try {
       await createVendor(vendorData);
@@ -126,6 +130,47 @@ export default function VendorsPage() {
 
   const handleDropdownToggle = (vendorId: string) => {
     setDropdownOpen(dropdownOpen === vendorId ? null : vendorId);
+  };
+
+  const handleEditVendor = (vendor: Vendor) => {
+    setEditingVendor(vendor);
+    setShowEditModal(true);
+    setDropdownOpen(null);
+  };
+
+  const handleUpdateVendor = async (vendorId: string, vendorData: {
+    name: string;
+    email: string;
+    role: 'admin' | 'seller';
+    position: string;
+  }) => {
+    try {
+      await updateVendor(vendorId, {
+        name: vendorData.name,
+        role: vendorData.role,
+        position: vendorData.position,
+      });
+      // Update local state
+      setVendors(prev => 
+        prev.map(vendor => 
+          vendor.id === vendorId 
+            ? { ...vendor, name: vendorData.name, role: vendorData.role, position: vendorData.position }
+            : vendor
+        )
+      );
+      setShowEditModal(false);
+      setEditingVendor(null);
+      setToast({
+        message: 'Vendedor actualizado correctamente',
+        type: 'success',
+      });
+    } catch (error) {
+      console.error('Error updating vendor:', error);
+      setToast({
+        message: 'Error al actualizar el vendedor',
+        type: 'error',
+      });
+    }
   };
 
   const handleToggleStatus = async (vendorId: string, currentStatus: boolean) => {
@@ -238,6 +283,9 @@ export default function VendorsPage() {
                     Correo
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cargo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Rol
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -248,7 +296,7 @@ export default function VendorsPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredVendors.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                       {searchTerm || roleFilter
                         ? 'No se encontraron vendedores que coincidan con los filtros.'
                         : 'No hay vendedores registrados.'}
@@ -272,6 +320,11 @@ export default function VendorsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`text-sm ${vendor.active ? 'text-gray-500' : 'text-gray-400'}`}>
                           {vendor.email}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm ${vendor.active ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {vendor.position || 'Sin cargo'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -300,6 +353,13 @@ export default function VendorsPage() {
                             className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
                           >
                             <div className="py-1">
+                              <button
+                                onClick={() => handleEditVendor(vendor)}
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar
+                              </button>
                               <button
                                 onClick={() => handleToggleStatus(vendor.id, vendor.active)}
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -334,6 +394,18 @@ export default function VendorsPage() {
         <AddVendorModal
           onClose={() => setShowAddModal(false)}
           onSubmit={handleAddVendor}
+        />
+      )}
+
+      {/* Edit Vendor Modal */}
+      {showEditModal && (
+        <EditVendorModal
+          vendor={editingVendor}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingVendor(null);
+          }}
+          onSubmit={handleUpdateVendor}
         />
       )}
 

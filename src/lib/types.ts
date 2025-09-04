@@ -6,6 +6,7 @@ export interface Vendor {
   email: string;
   photoUrl?: string;
   role: 'admin' | 'seller';
+  position?: string;
   active: boolean;
   createdAt: Timestamp;
 }

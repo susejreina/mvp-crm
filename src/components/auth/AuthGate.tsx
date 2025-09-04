@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService, type AuthUser } from '@/lib/auth/service';
+import { isValidVendorAdmin } from '@/lib/firestore/auth';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -12,16 +13,42 @@ interface AuthGateProps {
 export default function AuthGate({ children, fallback }: AuthGateProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isValidVendor, setIsValidVendor] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged((authUser) => {
-      setUser(authUser);
-      setLoading(false);
+    const unsubscribe = authService.onAuthStateChanged(async (authUser) => {
+      setLoading(true);
       
       if (!authUser) {
+        setUser(null);
+        setIsValidVendor(false);
+        setLoading(false);
+        router.replace('/login');
+        return;
+      }
+
+      // Check if the authenticated user is a valid vendor admin
+      if (authUser && authUser.email) {
+        const isVendorAdmin = await isValidVendorAdmin(authUser.email);
+        
+        if (isVendorAdmin) {
+          setUser(authUser);
+          setIsValidVendor(true);
+        } else {
+          // User is authenticated but not a valid vendor admin
+          setUser(null);
+          setIsValidVendor(false);
+          await authService.signOut(); // Sign out the user
+          router.replace('/login');
+        }
+      } else {
+        setUser(null);
+        setIsValidVendor(false);
         router.replace('/login');
       }
+      
+      setLoading(false);
     });
 
     return unsubscribe;
@@ -58,7 +85,7 @@ export default function AuthGate({ children, fallback }: AuthGateProps) {
     );
   }
 
-  if (!user) {
+  if (!user || !isValidVendor) {
     return null; // El useEffect ya redirige a /login
   }
 

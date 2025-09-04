@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { authService, type AuthUser, AuthServiceError } from '@/lib/auth/service';
+import { isValidVendorAdmin } from '@/lib/firestore/auth';
 import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
@@ -23,12 +24,7 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
-    const unsub = authService.onAuthStateChanged((user: AuthUser | null) => {
-      if (user) router.replace('/dashboard');
-    });
-    return unsub;
-  }, [router]);
+  // Removed automatic redirect - let AuthGate handle navigation after vendor validation
 
   const validate = () => {
     const next: typeof errors = {};
@@ -47,7 +43,26 @@ export default function LoginPage() {
     setErrors({});
     setMessage(null);
     try {
-      await authService.signInWithEmailPassword(email, password);
+      const result = await authService.signInWithEmailPassword(email, password);
+      
+      // Check if user is a valid vendor admin
+      if (result.user.email) {
+        const isVendorAdmin = await isValidVendorAdmin(result.user.email);
+        
+        if (!isVendorAdmin) {
+          // Set error message BEFORE signing out to ensure it persists
+          setErrors({
+            general: 'Tus datos son correctos, pero no tienes permisos para acceder a la aplicación. Contacta al administrador.',
+          });
+          
+          // Sign out the user
+          await authService.signOut();
+          return;
+        }
+        
+        // User is valid vendor admin, redirect to dashboard
+        router.replace('/dashboard');
+      }
     } catch (err) {
       setErrors({
         general:
@@ -63,7 +78,25 @@ export default function LoginPage() {
     setErrors({});
     setMessage(null);
     try {
-      await authService.signInWithGoogle();
+      const result = await authService.signInWithGoogle();
+      
+      // Check if user is a valid vendor admin
+      if (result.user.email) {
+        const isVendorAdmin = await isValidVendorAdmin(result.user.email);
+        if (!isVendorAdmin) {
+          // Set error message BEFORE signing out to ensure it persists
+          setErrors({
+            general: 'Tus datos son correctos, pero no tienes permisos para acceder a la aplicación. Contacta al administrador.',
+          });
+          
+          // Sign out the user
+          await authService.signOut();
+          return;
+        }
+        
+        // User is valid vendor admin, redirect to dashboard
+        router.replace('/dashboard');
+      }
     } catch (err) {
       setErrors({
         general:
@@ -288,19 +321,6 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                {/* Registro */}
-                <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    ¿No tienes una cuenta?{' '}
-                    <button
-                      type="button"
-                      className="text-[#0000FF] font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                      disabled={loading || googleLoading}
-                    >
-                      Regístrate
-                    </button>
-                  </p>
-                </div>
               </>
             ) : (
               <>
