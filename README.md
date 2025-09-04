@@ -239,7 +239,7 @@ mvp-crm/
 │   │   ├── auth/             # Authentication components
 │   │   ├── dashboard/        # Dashboard components
 │   │   ├── layout/           # Layout components
-│   │   ├── sales/            # Sales components
+│   │   ├── sales/            # Sales components (including modals)
 │   │   ├── ui/               # Reusable UI components
 │   │   └── vendors/          # Vendor components
 │   ├── lib/                   # Utilities and services
@@ -271,12 +271,14 @@ mvp-crm/
 - Default position: "Vendedor"
 
 ### Sales Management
-- Individual and group sales
+- Individual and group sales creation via unified modal
 - Multi-currency support (USD/MXN/COP)
 - Automatic USD conversion
 - Status workflow (pending → approved/rejected)
-- Comment system for internal notes
+- Interactive status change modal for pending sales (approve/reject with comments)
+- Comment system for internal notes on all sales
 - Evidence attachment support
+- Real-time data refresh after status changes
 
 ### Dashboard Analytics
 - Total sales in USD
@@ -284,6 +286,13 @@ mvp-crm/
 - Products in catalog
 - Vendors team size
 - Quick actions for common tasks
+
+### Interactive Sales Features
+- **Sales Table Actions**: Each sale has a dropdown menu with contextual options
+- **Status Change Modal**: For pending sales, directors can approve/reject with mandatory comments
+- **Add Comment Modal**: For all sales, users can add internal notes and observations
+- **Unified Sale Creation**: Same modal experience across dashboard and sales page
+- **Real-time Updates**: All changes refresh the data automatically
 
 ## Testing
 

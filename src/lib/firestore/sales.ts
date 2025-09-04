@@ -147,6 +147,34 @@ export async function addSaleComment(saleId: string, comment: {
 }
 
 /**
+ * Update sale status and add comment
+ */
+export async function updateSaleStatusWithComment(
+  saleId: string, 
+  status: 'pending' | 'approved' | 'rejected',
+  comment: {
+    message: string;
+    createdBy: string;
+    createdByName: string;
+  }
+): Promise<void> {
+  const saleRef = doc(db, 'sales', saleId);
+  const newComment: SaleComment = {
+    id: `comment_${Date.now()}`,
+    message: comment.message,
+    createdBy: comment.createdBy,
+    createdByName: comment.createdByName,
+    createdAt: Timestamp.now()
+  };
+  
+  await updateDoc(saleRef, {
+    status,
+    comments: arrayUnion(newComment),
+    updatedAt: Timestamp.now()
+  });
+}
+
+/**
  * Get all products
  */
 export async function getProducts(): Promise<Product[]> {
