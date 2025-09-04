@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { authService, type AuthUser, AuthServiceError } from '@/lib/auth/service';
+import { isValidVendorAdmin } from '@/lib/firestore/auth';
 import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
@@ -47,7 +48,19 @@ export default function LoginPage() {
     setErrors({});
     setMessage(null);
     try {
-      await authService.signInWithEmailPassword(email, password);
+      const result = await authService.signInWithEmailPassword(email, password);
+      
+      // Check if user is a valid vendor admin
+      if (result.user.email) {
+        const isVendorAdmin = await isValidVendorAdmin(result.user.email);
+        if (!isVendorAdmin) {
+          await authService.signOut();
+          setErrors({
+            general: 'Acceso denegado. Solo administradores autorizados pueden acceder al sistema.',
+          });
+          return;
+        }
+      }
     } catch (err) {
       setErrors({
         general:
@@ -63,7 +76,19 @@ export default function LoginPage() {
     setErrors({});
     setMessage(null);
     try {
-      await authService.signInWithGoogle();
+      const result = await authService.signInWithGoogle();
+      
+      // Check if user is a valid vendor admin
+      if (result.user.email) {
+        const isVendorAdmin = await isValidVendorAdmin(result.user.email);
+        if (!isVendorAdmin) {
+          await authService.signOut();
+          setErrors({
+            general: 'Acceso denegado. Solo administradores autorizados pueden acceder al sistema.',
+          });
+          return;
+        }
+      }
     } catch (err) {
       setErrors({
         general:
@@ -288,19 +313,6 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                {/* Registro */}
-                <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    ¿No tienes una cuenta?{' '}
-                    <button
-                      type="button"
-                      className="text-[#0000FF] font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                      disabled={loading || googleLoading}
-                    >
-                      Regístrate
-                    </button>
-                  </p>
-                </div>
               </>
             ) : (
               <>
