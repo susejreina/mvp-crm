@@ -226,7 +226,7 @@ export default function DashboardPage() {
           title="Vendedores"
           value={loading.sellersCount ? '' : metrics.sellersCount}
           subtitle="Comerciales"
-          href="/vendedores"
+          href="/vendors"
           loading={loading.sellersCount}
           error={errors.sellersCount}
           icon={

@@ -10,6 +10,7 @@ import SalesFilters from '../../../components/sales/SalesFilters';
 import SalesKPIs from '../../../components/sales/SalesKPIs';
 import SalesTable from '../../../components/sales/SalesTable';
 import Pagination from '../../../components/sales/Pagination';
+import SaleKindModal from '../../../components/sales/SaleKindModal';
 import { 
   SalesQueryFilters, 
   SortableField, 
@@ -32,6 +33,7 @@ export default function VentasPage() {
   // State
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -257,18 +259,27 @@ export default function VentasPage() {
           <h1 className="text-3xl md:text-4xl text-gray-900">
             Registro <span className="font-semibold">de ventas</span>
           </h1>
-          <button
-            onClick={handleExport}
-            disabled={exporting || loading}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {exporting ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            {exporting ? 'Exportando...' : 'Exportar datos'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              <span className="text-lg mr-2">+</span>
+              Nueva venta
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={exporting || loading}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {exporting ? 'Exportando...' : 'Exportar datos'}
+            </button>
+          </div>
         </div>
 
         {/* Filters and KPIs */}
@@ -305,6 +316,7 @@ export default function VentasPage() {
             sortBy={filters.sortBy}
             sortDir={filters.sortDir}
             onSortChange={handleSortChange}
+            onDataChange={() => loadSales(filters, currentPage, pageSize)}
             loading={loading}
           />
           
@@ -331,6 +343,12 @@ export default function VentasPage() {
           onClose={() => setToast(null)}
         />
       )}
+      
+      {/* Sale Kind Modal */}
+      <SaleKindModal 
+        open={modalOpen} 
+        onOpenChange={setModalOpen} 
+      />
     </div>
   );
 }

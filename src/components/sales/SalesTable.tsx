@@ -2,16 +2,23 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronUp, ChevronDown, MoreHorizontal, Eye } from 'lucide-react';
+import { ChevronUp, ChevronDown, MoreHorizontal, Eye, Edit, CheckCircle } from 'lucide-react';
 import { SaleRow, SortableField, SortDirection } from '../../lib/sales/query';
 import { formatDate, formatCurrency } from '../../lib/utils/csvExport';
 import { getSaleStatusLabel } from '../../lib/utils/saleStatus';
+import { updateSaleStatusWithComment, addSaleComment } from '../../lib/firestore/sales';
+import { authService } from '../../lib/auth/service';
+import { getVendorByEmail } from '../../lib/firestore/auth';
+import { Vendor } from '../../lib/types';
+import StatusChangeModal from './StatusChangeModal';
+import AddCommentModal from './AddCommentModal';
 
 interface SalesTableProps {
   sales: SaleRow[];
   sortBy?: SortableField;
   sortDir?: SortDirection;
   onSortChange: (field: SortableField) => void;
+  onDataChange?: () => void; // Callback to refresh data after changes
   loading?: boolean;
 }
 
@@ -33,7 +40,6 @@ function SortableHeader({
   className = '' 
 }: SortableHeaderProps) {
   const isActive = sortBy === field;
-  const nextDir = isActive ? (sortDir === 'asc' ? 'desc' : undefined) : 'asc';
   
   const getAriaSort = () => {
     if (!isActive) return 'none';
@@ -82,11 +88,34 @@ export default function SalesTable({
   sortBy, 
   sortDir, 
   onSortChange,
+  onDataChange,
   loading = false 
 }: SalesTableProps) {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
+  const [statusChangeModal, setStatusChangeModal] = useState<{ isOpen: boolean; saleId?: string; customerName?: string }>({ isOpen: false });
+  const [addCommentModal, setAddCommentModal] = useState<{ isOpen: boolean; saleId?: string; customerName?: string }>({ isOpen: false });
+  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load current vendor on mount
+  useEffect(() => {
+    const loadCurrentVendor = async () => {
+      const user = await new Promise<{ email?: string } | null>((resolve) => {
+        const unsubscribe = authService.onAuthStateChanged((user) => {
+          unsubscribe();
+          resolve(user);
+        });
+      });
+
+      if (user && user.email) {
+        const vendor = await getVendorByEmail(user.email);
+        setCurrentVendor(vendor);
+      }
+    };
+
+    loadCurrentVendor();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -110,6 +139,60 @@ export default function SalesTable({
   const handleViewDetail = (saleId: string) => {
     router.push(`/ventas/${saleId}`);
     setDropdownOpen(null);
+  };
+
+  const handleStatusChange = (saleId: string, customerName: string) => {
+    setStatusChangeModal({ isOpen: true, saleId, customerName });
+    setDropdownOpen(null);
+  };
+
+  const handleAddComment = (saleId: string, customerName: string) => {
+    setAddCommentModal({ isOpen: true, saleId, customerName });
+    setDropdownOpen(null);
+  };
+
+  const handleStatusChangeSubmit = async (status: 'approved' | 'rejected', comment: string) => {
+    if (!statusChangeModal.saleId || !currentVendor) {
+      throw new Error('Missing required data');
+    }
+
+    try {
+      await updateSaleStatusWithComment(statusChangeModal.saleId, status, {
+        message: comment,
+        createdBy: currentVendor.id,
+        createdByName: currentVendor.name
+      });
+      
+      // Refresh data if callback provided
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (error) {
+      console.error('Error updating sale status:', error);
+      throw error;
+    }
+  };
+
+  const handleAddCommentSubmit = async (comment: string) => {
+    if (!addCommentModal.saleId || !currentVendor) {
+      throw new Error('Missing required data');
+    }
+
+    try {
+      await addSaleComment(addCommentModal.saleId, {
+        message: comment,
+        createdBy: currentVendor.id,
+        createdByName: currentVendor.name
+      });
+      
+      // Refresh data if callback provided
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
   };
   if (loading) {
     return (
@@ -287,6 +370,26 @@ export default function SalesTable({
                           <Eye className="h-4 w-4 mr-2" />
                           Ver detalle
                         </button>
+                        
+                        {/* Status change option - only for pending sales */}
+                        {sale.status === 'pending' && (
+                          <button
+                            onClick={() => handleStatusChange(sale.id, sale.customerName)}
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Cambiar estatus
+                          </button>
+                        )}
+                        
+                        {/* Add comment option - for all sales */}
+                        <button
+                          onClick={() => handleAddComment(sale.id, sale.customerName)}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Agregar comentario
+                        </button>
                       </div>
                     </div>
                   )}
@@ -296,6 +399,22 @@ export default function SalesTable({
           </tbody>
         </table>
       </div>
+      
+      {/* Status Change Modal */}
+      <StatusChangeModal
+        isOpen={statusChangeModal.isOpen}
+        onClose={() => setStatusChangeModal({ isOpen: false })}
+        onSubmit={handleStatusChangeSubmit}
+        customerName={statusChangeModal.customerName || ''}
+      />
+      
+      {/* Add Comment Modal */}
+      <AddCommentModal
+        isOpen={addCommentModal.isOpen}
+        onClose={() => setAddCommentModal({ isOpen: false })}
+        onSubmit={handleAddCommentSubmit}
+        customerName={addCommentModal.customerName || ''}
+      />
     </div>
   );
 }
