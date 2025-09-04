@@ -71,6 +71,23 @@ export async function updateVendorRole(vendorId: string, role: 'admin' | 'seller
 }
 
 /**
+ * Update vendor information
+ */
+export async function updateVendor(vendorId: string, vendorData: {
+  name: string;
+  role: 'admin' | 'seller';
+  position: string;
+}): Promise<void> {
+  const vendorRef = doc(db, 'vendors', vendorId);
+  await updateDoc(vendorRef, {
+    name: vendorData.name,
+    role: vendorData.role,
+    position: vendorData.position,
+    updatedAt: Timestamp.now(),
+  });
+}
+
+/**
  * Toggle vendor active status
  */
 export async function toggleVendorStatus(vendorId: string, active: boolean): Promise<void> {
