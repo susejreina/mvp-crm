@@ -29,7 +29,7 @@ export default function AuthGate({ children, fallback }: AuthGateProps) {
       }
 
       // Check if the authenticated user is a valid vendor admin
-      if (authUser.email) {
+      if (authUser && authUser.email) {
         const isVendorAdmin = await isValidVendorAdmin(authUser.email);
         
         if (isVendorAdmin) {
@@ -45,7 +45,6 @@ export default function AuthGate({ children, fallback }: AuthGateProps) {
       } else {
         setUser(null);
         setIsValidVendor(false);
-        await authService.signOut();
         router.replace('/login');
       }
       

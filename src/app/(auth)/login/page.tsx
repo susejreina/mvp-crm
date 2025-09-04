@@ -24,12 +24,7 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
-    const unsub = authService.onAuthStateChanged((user: AuthUser | null) => {
-      if (user) router.replace('/dashboard');
-    });
-    return unsub;
-  }, [router]);
+  // Removed automatic redirect - let AuthGate handle navigation after vendor validation
 
   const validate = () => {
     const next: typeof errors = {};
@@ -55,12 +50,18 @@ export default function LoginPage() {
         const isVendorAdmin = await isValidVendorAdmin(result.user.email);
         
         if (!isVendorAdmin) {
-          await authService.signOut();
+          // Set error message BEFORE signing out to ensure it persists
           setErrors({
-            general: 'No tienes permisos para acceder al sistema. Debes ser un administrador registrado en la plataforma.',
+            general: 'Tus datos son correctos, pero no tienes permisos para acceder a la aplicación. Contacta al administrador.',
           });
+          
+          // Sign out the user
+          await authService.signOut();
           return;
         }
+        
+        // User is valid vendor admin, redirect to dashboard
+        router.replace('/dashboard');
       }
     } catch (err) {
       setErrors({
@@ -83,12 +84,18 @@ export default function LoginPage() {
       if (result.user.email) {
         const isVendorAdmin = await isValidVendorAdmin(result.user.email);
         if (!isVendorAdmin) {
-          await authService.signOut();
+          // Set error message BEFORE signing out to ensure it persists
           setErrors({
-            general: 'No tienes permisos para acceder al sistema. Debes ser un administrador registrado en la plataforma.',
+            general: 'Tus datos son correctos, pero no tienes permisos para acceder a la aplicación. Contacta al administrador.',
           });
+          
+          // Sign out the user
+          await authService.signOut();
           return;
         }
+        
+        // User is valid vendor admin, redirect to dashboard
+        router.replace('/dashboard');
       }
     } catch (err) {
       setErrors({

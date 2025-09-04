@@ -82,6 +82,7 @@ export default function VendorsPage() {
     name: string;
     email: string;
     role: 'admin' | 'seller';
+    position: string;
   }) => {
     try {
       await createVendor(vendorData);
@@ -238,6 +239,9 @@ export default function VendorsPage() {
                     Correo
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cargo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Rol
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -248,7 +252,7 @@ export default function VendorsPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredVendors.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                       {searchTerm || roleFilter
                         ? 'No se encontraron vendedores que coincidan con los filtros.'
                         : 'No hay vendedores registrados.'}
@@ -272,6 +276,11 @@ export default function VendorsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`text-sm ${vendor.active ? 'text-gray-500' : 'text-gray-400'}`}>
                           {vendor.email}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm ${vendor.active ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {vendor.position || 'Sin cargo'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

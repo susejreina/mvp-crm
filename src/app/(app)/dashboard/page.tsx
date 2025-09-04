@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { getTotalApprovedUsd, getClientsCount, getActiveProductsCount, getSellersCount } from '@/lib/dashboard/queries';
+import { authService } from '@/lib/auth/service';
+import { getVendorByEmail } from '@/lib/firestore/auth';
+import { Vendor } from '@/lib/types';
 import KpiCard from '@/components/dashboard/KpiCard';
 import QuickActionCard from '@/components/dashboard/QuickActionCard';
 import SaleKindModal from '@/components/sales/SaleKindModal';
@@ -30,6 +33,7 @@ interface ErrorStates {
 
 export default function DashboardPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
   
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalApprovedUsd: 0,
@@ -99,8 +103,23 @@ export default function DashboardPage() {
       await Promise.all(promises);
     };
 
+  const loadCurrentVendor = async () => {
+    const user = await new Promise((resolve) => {
+      const unsubscribe = authService.onAuthStateChanged((user) => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+
+    if (user && (user as any).email) {
+      const vendor = await getVendorByEmail((user as any).email);
+      setCurrentVendor(vendor);
+    }
+  };
+
   useEffect(() => {
     loadMetrics();
+    loadCurrentVendor();
   }, []);
 
   // Refresh metrics when window gains focus (user returns from another page)
@@ -123,8 +142,12 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Hola Angela Ojeda</h1>
-        <p className="text-gray-600">Director Comercial</p>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Hola {currentVendor ? currentVendor.name : 'Usuario'}
+        </h1>
+        <p className="text-gray-600">
+          {currentVendor?.position || 'Sin cargo asignado'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

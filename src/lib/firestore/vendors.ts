@@ -37,6 +37,7 @@ export async function createVendor(vendorData: {
   name: string;
   email: string;
   role: 'admin' | 'seller';
+  position: string;
 }): Promise<void> {
   // Generate vendor ID from email (slug format)
   const vendorId = vendorData.email.toLowerCase()
@@ -52,6 +53,7 @@ export async function createVendor(vendorData: {
     name: vendorData.name,
     email: vendorData.email,
     role: vendorData.role,
+    position: vendorData.position,
     active: true,
     createdAt: Timestamp.now(),
   });

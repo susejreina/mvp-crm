@@ -12,6 +12,7 @@ interface AddVendorModalProps {
     name: string;
     email: string;
     role: 'admin' | 'seller';
+    position: string;
   }) => Promise<void>;
 }
 
@@ -20,11 +21,13 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
     name: '',
     email: '',
     role: 'seller' as 'admin' | 'seller',
+    position: '',
   });
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
     role?: string;
+    position?: string;
   }>({});
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +54,11 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
     // Role validation
     if (!formData.role) {
       newErrors.role = 'El rol es requerido';
+    }
+
+    // Position validation
+    if (!formData.position.trim()) {
+      newErrors.position = 'El cargo es requerido';
     }
 
     setErrors(newErrors);
@@ -139,6 +147,19 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
               value={formData.role}
               onChange={(e) => handleInputChange('role', e.target.value as 'admin' | 'seller')}
               error={errors.role}
+              required
+            />
+          </div>
+
+          {/* Position Field */}
+          <div>
+            <Input
+              label="Cargo"
+              type="text"
+              value={formData.position}
+              onChange={(e) => handleInputChange('position', e.target.value)}
+              error={errors.position}
+              placeholder="Ej: Director Comercial, Gerente de Ventas"
               required
             />
           </div>
