@@ -53,10 +53,11 @@ export default function LoginPage() {
       // Check if user is a valid vendor admin
       if (result.user.email) {
         const isVendorAdmin = await isValidVendorAdmin(result.user.email);
+        
         if (!isVendorAdmin) {
           await authService.signOut();
           setErrors({
-            general: 'Acceso denegado. Solo administradores autorizados pueden acceder al sistema.',
+            general: 'No tienes permisos para acceder al sistema. Debes ser un administrador registrado en la plataforma.',
           });
           return;
         }
@@ -84,7 +85,7 @@ export default function LoginPage() {
         if (!isVendorAdmin) {
           await authService.signOut();
           setErrors({
-            general: 'Acceso denegado. Solo administradores autorizados pueden acceder al sistema.',
+            general: 'No tienes permisos para acceder al sistema. Debes ser un administrador registrado en la plataforma.',
           });
           return;
         }
