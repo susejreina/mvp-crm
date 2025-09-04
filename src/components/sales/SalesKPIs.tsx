@@ -13,12 +13,11 @@ interface SalesKPIsProps {
 interface KPICardProps {
   title: string;
   value: string;
-  subvalue: string;
   color: 'orange' | 'green';
   loading?: boolean;
 }
 
-function KPICard({ title, value, subvalue, color, loading }: KPICardProps) {
+function KPICard({ title, value, color, loading }: KPICardProps) {
   const colorClasses = {
     orange: {
       text: 'text-orange-600',
@@ -48,14 +47,14 @@ function KPICard({ title, value, subvalue, color, loading }: KPICardProps) {
 
   return (
     <div className={`${classes.bg} ${classes.border} border rounded-lg p-6`}>
-      <h3 className={`text-sm font-medium ${classes.text} mb-2`}>
+      <h3 className={`text-sm font-bold ${classes.text} mb-2`}>
         {title}
       </h3>
       <div className={`text-2xl font-bold ${classes.text} mb-1`}>
         {value}
       </div>
-      <div className={`text-sm ${classes.text}`}>
-        {subvalue}
+      <div className={`text-xs ${classes.text}`}>
+        USD
       </div>
     </div>
   );
@@ -69,19 +68,17 @@ export default function SalesKPIs({
   loading = false
 }: SalesKPIsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <KPICard
         title="Ventas por aprobar"
-        value={pendingCount.toLocaleString()}
-        subvalue={formatCurrency(pendingAmount)}
+        value={formatCurrency(Number(pendingAmount) || 0)}
         color="orange"
         loading={loading}
       />
       
       <KPICard
         title="Ventas aprobadas" 
-        value={approvedCount.toLocaleString()}
-        subvalue={formatCurrency(approvedAmount)}
+        value={formatCurrency(Number(approvedAmount) || 0)}
         color="green"
         loading={loading}
       />

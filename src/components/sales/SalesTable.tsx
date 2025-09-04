@@ -1,6 +1,8 @@
 'use client';
 
-import { ChevronUp, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChevronUp, ChevronDown, MoreHorizontal, Eye } from 'lucide-react';
 import { SaleRow, SortableField, SortDirection } from '../../lib/sales/query';
 import { formatDate, formatCurrency } from '../../lib/utils/csvExport';
 import { getSaleStatusLabel } from '../../lib/utils/saleStatus';
@@ -79,9 +81,36 @@ export default function SalesTable({
   sales, 
   sortBy, 
   sortDir, 
-  onSortChange, 
+  onSortChange,
   loading = false 
 }: SalesTableProps) {
+  const router = useRouter();
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(null);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [dropdownOpen]);
+
+  const handleDropdownToggle = (saleId: string) => {
+    setDropdownOpen(dropdownOpen === saleId ? null : saleId);
+  };
+
+
+  const handleViewDetail = (saleId: string) => {
+    router.push(`/ventas/${saleId}`);
+    setDropdownOpen(null);
+  };
   if (loading) {
     return (
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -184,7 +213,6 @@ export default function SalesTable({
               </SortableHeader>
               
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
               </th>
             </tr>
           </thead>
@@ -232,14 +260,36 @@ export default function SalesTable({
                   </span>
                 </td>
                 
-                <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium relative">
                   <button
                     type="button"
+                    onClick={() => handleDropdownToggle(sale.id)}
                     className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                     aria-label={`More actions for ${sale.customerName}`}
                   >
                     <MoreHorizontal className="h-5 w-5" />
                   </button>
+                  
+                  {dropdownOpen === sale.id && (
+                    <div 
+                      ref={dropdownRef} 
+                      className={`absolute right-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 ${
+                        index >= sales.length - 2 
+                          ? 'bottom-full mb-1' 
+                          : 'top-full mt-1'
+                      }`}
+                    >
+                      <div className="py-1">
+                        <button
+                          onClick={() => handleViewDetail(sale.id)}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver detalle
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

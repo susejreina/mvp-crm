@@ -10,7 +10,9 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
   Timestamp,
-  Query
+  Query,
+  doc,
+  getDoc
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Sale } from '../types';
@@ -361,6 +363,28 @@ export async function fetchAllSalesForExport(
     return allSales.map(saleToRow);
   } catch (error) {
     console.error('Error fetching all sales for export:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch a single sale by ID
+ */
+export async function fetchSaleById(saleId: string): Promise<Sale | null> {
+  try {
+    const saleRef = doc(db, 'sales', saleId);
+    const saleSnap = await getDoc(saleRef);
+    
+    if (!saleSnap.exists()) {
+      return null;
+    }
+    
+    return {
+      id: saleSnap.id,
+      ...saleSnap.data()
+    } as Sale;
+  } catch (error) {
+    console.error('Error fetching sale:', error);
     throw error;
   }
 }

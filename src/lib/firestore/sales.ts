@@ -1,6 +1,6 @@
-import { doc, getDoc, setDoc, Timestamp, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, Timestamp, collection, getDocs, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Sale, Product, saleIdFrom } from '../types';
+import { Sale, Product, SaleComment, saleIdFrom } from '../types';
 
 export interface CreateSaleData {
   // Sale type
@@ -95,6 +95,9 @@ export async function createSale(data: CreateSaleData): Promise<Sale> {
     // Status
     status: 'pending',
     
+    // Comments
+    comments: existingSale.exists() ? existingSale.data().comments || [] : [],
+    
     // Metadata
     createdBy: data.vendorId, // Will be updated with actual current user
     createdAt: existingSale.exists() ? existingSale.data().createdAt : Timestamp.now(),
@@ -107,6 +110,40 @@ export async function createSale(data: CreateSaleData): Promise<Sale> {
     id: saleId,
     ...saleData,
   };
+}
+
+/**
+ * Update sale status
+ */
+export async function updateSaleStatus(saleId: string, status: 'pending' | 'approved' | 'rejected'): Promise<void> {
+  const saleRef = doc(db, 'sales', saleId);
+  await updateDoc(saleRef, {
+    status,
+    updatedAt: Timestamp.now()
+  });
+}
+
+/**
+ * Add comment to sale
+ */
+export async function addSaleComment(saleId: string, comment: {
+  message: string;
+  createdBy: string;
+  createdByName: string;
+}): Promise<void> {
+  const saleRef = doc(db, 'sales', saleId);
+  const newComment: SaleComment = {
+    id: `comment_${Date.now()}`,
+    message: comment.message,
+    createdBy: comment.createdBy,
+    createdByName: comment.createdByName,
+    createdAt: Timestamp.now()
+  };
+  
+  await updateDoc(saleRef, {
+    comments: arrayUnion(newComment),
+    updatedAt: Timestamp.now()
+  });
 }
 
 /**

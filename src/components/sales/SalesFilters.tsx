@@ -1,28 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Download, Loader2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { SalesQueryFilters } from '../../lib/sales/query';
-import { Product, Client } from '../../lib/types';
+import { Product, Vendor } from '../../lib/types';
 import { getSaleStatusOptions } from '../../lib/utils/saleStatus';
 
 interface SalesFiltersProps {
   filters: SalesQueryFilters;
   onFiltersChange: (filters: SalesQueryFilters) => void;
-  onExport: () => void;
   products: Product[];
-  vendors: Client[];
-  exporting?: boolean;
+  vendors: Vendor[];
   loading?: boolean;
 }
 
 export default function SalesFilters({
   filters,
   onFiltersChange,
-  onExport,
   products,
   vendors,
-  exporting = false,
   loading = false
 }: SalesFiltersProps) {
   const [searchText, setSearchText] = useState(filters.text || '');
@@ -60,7 +56,7 @@ export default function SalesFilters({
           placeholder="Busca por nombre o correo"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500"
         />
       </div>
 
@@ -70,15 +66,12 @@ export default function SalesFilters({
 
         {/* Date range */}
         <div className="flex items-center space-x-2">
-          <label htmlFor="date-from" className="text-sm text-gray-600">
-            Filtrar por fecha
-          </label>
           <input
             id="date-from"
             type="date"
             value={formatDateForInput(filters.dateFrom)}
             onChange={(e) => handleFilterChange('dateFrom', e.target.value ? new Date(e.target.value) : undefined)}
-            className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500"
           />
           <span className="text-sm text-gray-500">to</span>
           <input
@@ -86,7 +79,7 @@ export default function SalesFilters({
             type="date"
             value={formatDateForInput(filters.dateTo)}
             onChange={(e) => handleFilterChange('dateTo', e.target.value ? new Date(e.target.value) : undefined)}
-            className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500"
           />
         </div>
 
@@ -94,7 +87,7 @@ export default function SalesFilters({
         <select
           value={filters.productId || ''}
           onChange={(e) => handleFilterChange('productId', e.target.value)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-700"
         >
           <option value="">Producto</option>
           {products.map(product => (
@@ -108,7 +101,7 @@ export default function SalesFilters({
         <select
           value={filters.vendorId || ''}
           onChange={(e) => handleFilterChange('vendorId', e.target.value)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-700"
         >
           <option value="">Vendedor</option>
           {vendors.map(vendor => (
@@ -122,7 +115,7 @@ export default function SalesFilters({
         <select
           value={filters.status || ''}
           onChange={(e) => handleFilterChange('status', e.target.value)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-700"
         >
           <option value="">Estado</option>
           {statusOptions.map(option => (
@@ -132,19 +125,6 @@ export default function SalesFilters({
           ))}
         </select>
 
-        {/* Export button */}
-        <button
-          onClick={onExport}
-          disabled={exporting || loading}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {exporting ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <Download className="h-4 w-4 mr-2" />
-          )}
-          {exporting ? 'Exportando...' : 'Exportar datos'}
-        </button>
       </div>
     </div>
   );

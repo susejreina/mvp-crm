@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { Download, Loader2 } from 'lucide-react';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
+import Toast from '../../../components/ui/Toast';
 import SalesFilters from '../../../components/sales/SalesFilters';
 import SalesKPIs from '../../../components/sales/SalesKPIs';
 import SalesTable from '../../../components/sales/SalesTable';
@@ -20,7 +22,8 @@ import {
 import { exportSalesToCSV } from '../../../lib/utils/csvExport';
 import { getProducts } from '../../../lib/firestore/sales';
 import { getActiveClients } from '../../../lib/firestore/clients';
-import { Product, Client, Sale } from '../../../lib/types';
+import { getActiveVendors } from '../../../lib/firestore/vendors';
+import { Product, Client, Sale, Vendor } from '../../../lib/types';
 
 export default function VentasPage() {
   const router = useRouter();
@@ -30,7 +33,7 @@ export default function VentasPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [vendors, setVendors] = useState<Client[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [stats, setStats] = useState({
     pendingCount: 0,
@@ -44,6 +47,12 @@ export default function VentasPage() {
   const [pageSize, setPageSize] = useState(25);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPrevPage, setHasPrevPage] = useState(false);
+  
+  // Toast state
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
   const cursorsRef = useRef<{
     [key: number]: QueryDocumentSnapshot<DocumentData>
   }>({});
@@ -88,7 +97,7 @@ export default function VentasPage() {
       try {
         const [productsData, vendorsData] = await Promise.all([
           getProducts(),
-          getActiveClients()
+          getActiveVendors()
         ]);
         
         setProducts(productsData.filter(p => p.active));
@@ -133,7 +142,14 @@ export default function VentasPage() {
         dateFrom: newFilters.dateFrom,
         dateTo: newFilters.dateTo
       });
-      setStats(statsData);
+      
+      // Ensure all stats are numbers
+      setStats({
+        pendingCount: Number(statsData.pendingCount) || 0,
+        approvedCount: Number(statsData.approvedCount) || 0,
+        pendingAmount: Number(statsData.pendingAmount) || 0,
+        approvedAmount: Number(statsData.approvedAmount) || 0,
+      });
 
     } catch (error) {
       console.error('Error loading sales:', error);
@@ -220,6 +236,7 @@ export default function VentasPage() {
     }
   };
 
+
   const salesRows = sales.map(saleToRow);
 
   return (
@@ -236,33 +253,50 @@ export default function VentasPage() {
         </div>
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 flex justify-between items-center">
           <h1 className="text-3xl md:text-4xl text-gray-900">
             Registro <span className="font-semibold">de ventas</span>
           </h1>
+          <button
+            onClick={handleExport}
+            disabled={exporting || loading}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {exporting ? 'Exportando...' : 'Exportar datos'}
+          </button>
         </div>
 
-        {/* Filters */}
-        <div className="mb-6">
-          <SalesFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            onExport={handleExport}
-            products={products}
-            vendors={vendors}
-            exporting={exporting}
-            loading={loading}
-          />
+        {/* Filters and KPIs */}
+        <div className="mb-6 flex gap-6">
+          {/* Filters - 60% width */}
+          <div className="flex-[0_0_60%]">
+            <SalesFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              products={products}
+              vendors={vendors}
+              loading={loading}
+            />
+          </div>
+          
+          {/* KPIs - 40% width */}
+          <div className="flex-[0_0_40%] flex gap-4">
+            <div className="flex-1">
+              <SalesKPIs
+                pendingCount={stats.pendingCount}
+                approvedCount={stats.approvedCount}
+                pendingAmount={stats.pendingAmount}
+                approvedAmount={stats.approvedAmount}
+                loading={loading}
+              />
+            </div>
+          </div>
         </div>
-
-        {/* KPIs */}
-        <SalesKPIs
-          pendingCount={stats.pendingCount}
-          approvedCount={stats.approvedCount}
-          pendingAmount={stats.pendingAmount}
-          approvedAmount={stats.approvedAmount}
-          loading={loading}
-        />
 
         {/* Table */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -288,6 +322,15 @@ export default function VentasPage() {
           )}
         </div>
       </div>
+      
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

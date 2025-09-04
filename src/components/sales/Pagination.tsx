@@ -27,15 +27,15 @@ export default function Pagination({
   const endIndex = currentPage * pageSize;
   
   const showingText = totalCount 
-    ? `Showing ${startIndex}–${Math.min(endIndex, totalCount)} of ${totalCount}`
-    : `Showing ${startIndex}–${endIndex}`;
+    ? `Mostrando ${startIndex}–${Math.min(endIndex, totalCount)} de ${totalCount}`
+    : `Mostrando ${startIndex}–${endIndex}`;
 
   return (
     <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
       {/* Page size selector */}
       <div className="flex items-center space-x-2">
         <label htmlFor="page-size" className="text-sm text-gray-700">
-          Show:
+          Mostrar:
         </label>
         <select
           id="page-size"
@@ -48,7 +48,7 @@ export default function Pagination({
           <option value={50}>50</option>
           <option value={100}>100</option>
         </select>
-        <span className="text-sm text-gray-700">per page</span>
+        <span className="text-sm text-gray-700">por página</span>
       </div>
 
       {/* Showing text */}
@@ -67,11 +67,11 @@ export default function Pagination({
           aria-label="Go to previous page"
         >
           <ChevronLeft className="h-4 w-4" />
-          <span className="ml-1 hidden sm:inline">Previous</span>
+          <span className="ml-1 hidden sm:inline">Anterior</span>
         </button>
 
         <span className="text-sm text-gray-700 px-2">
-          Page {currentPage}
+          Página {currentPage}
         </span>
 
         <button
@@ -80,7 +80,7 @@ export default function Pagination({
           className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Go to next page"
         >
-          <span className="mr-1 hidden sm:inline">Next</span>
+          <span className="mr-1 hidden sm:inline">Siguiente</span>
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>

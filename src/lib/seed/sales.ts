@@ -1,7 +1,7 @@
 // src/lib/seed/sales.ts
 import { db } from '../firebase';
 import { collection, writeBatch, doc, Timestamp } from 'firebase/firestore';
-import { Sale, SaleUser, slugifyEmail, saleIdFrom } from '../types';
+import { Sale, SaleUser, SaleComment, slugifyEmail, saleIdFrom } from '../types';
 import { upsertClientFromSaleInput } from './clients';
 
 /** Util: elimina claves undefined (profundo) para evitar errores de Firestore */
@@ -263,6 +263,9 @@ export async function seedSales({ adminUid }: { adminUid: string }): Promise<voi
 
       status: s.status,
       users: s.users,
+
+      // Initialize empty comments array for all sales
+      comments: [],
 
       createdBy: adminUid,
       createdAt: now,
