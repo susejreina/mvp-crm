@@ -11,8 +11,8 @@ export async function getTotalApprovedUsd(db: Firestore): Promise<number> {
     let total = 0;
     querySnapshot.forEach((doc) => {
       const sale = doc.data() as Sale;
-      // Include pending and approved, exclude denied
-      if (sale.status !== 'denied') {
+      // Include pending and approved, exclude rejected
+      if (sale.status !== 'rejected') {
         // Use usdAmount field for consistent calculations regardless of currency
         total += sale.usdAmount || sale.amount; // Fallback to amount for legacy data
       }

@@ -6,7 +6,7 @@ const navigation = [
   { name: 'Ventas', href: '/ventas' },
   { name: 'Clientes', href: '/clientes' },
   { name: 'Productos', href: '/productos' },
-  { name: 'Vendedores', href: '/vendedores' },
+  { name: 'Vendedores', href: '/vendors' },
 ];
 
 export default function AppFooter() {

@@ -49,6 +49,14 @@ export interface EvidenceType {
   createdAt: Timestamp;
 }
 
+export interface SaleComment {
+  id: string;
+  message: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Timestamp;
+}
+
 export interface Sale {
   id: string;
   type: 'individual' | 'group';
@@ -79,10 +87,13 @@ export interface Sale {
   evidenceType?: string;
   evidenceValue?: string;
   
-  status: 'pending' | 'approved' | 'denied';
+  status: 'pending' | 'approved' | 'rejected';
   
   // Only for group sales
   users?: Array<{ name: string; email: string; phone?: string }>;
+  
+  // Comments array
+  comments?: SaleComment[];
   
   createdBy: string;
   createdAt: Timestamp;

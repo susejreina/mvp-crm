@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, query, where, updateDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, updateDoc, setDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Client, slugifyEmail } from '../types';
 
@@ -22,6 +22,20 @@ export interface UpdateClientData {
 export async function getActiveClients(): Promise<Client[]> {
   const clientsRef = collection(db, 'clients');
   const q = query(clientsRef, where('active', '==', true));
+  const snapshot = await getDocs(q);
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  } as Client));
+}
+
+/**
+ * Get all clients (active and inactive) for management
+ */
+export async function getAllClients(): Promise<Client[]> {
+  const clientsRef = collection(db, 'clients');
+  const q = query(clientsRef, orderBy('name'));
   const snapshot = await getDocs(q);
   
   return snapshot.docs.map(doc => ({

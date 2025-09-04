@@ -1,7 +1,7 @@
 // src/lib/seed/sales.ts
 import { db } from '../firebase';
 import { collection, writeBatch, doc, Timestamp } from 'firebase/firestore';
-import { Sale, SaleUser, slugifyEmail, saleIdFrom } from '../types';
+import { Sale, SaleUser, SaleComment, slugifyEmail, saleIdFrom } from '../types';
 import { upsertClientFromSaleInput } from './clients';
 
 /** Util: elimina claves undefined (profundo) para evitar errores de Firestore */
@@ -33,7 +33,7 @@ export interface DemoSaleInput {
   source: string;
   week: number;
   iteration: number;
-  status: 'pending' | 'approved' | 'denied';
+  status: 'pending' | 'approved' | 'rejected';
   evidenceUrl?: string;
   users?: SaleUser[];
 }
@@ -120,7 +120,7 @@ const demoSales: DemoSaleInput[] = [
     source: 'YouTube',
     week: 17,
     iteration: 37,
-    status: 'denied',
+    status: 'rejected',
     evidenceUrl: 'https://drive.google.com/example2',
   },
   {
@@ -201,7 +201,7 @@ const demoSales: DemoSaleInput[] = [
     source: 'WhatsApp',
     week: 15,
     iteration: 35,
-    status: 'denied',
+    status: 'rejected',
   },
 ];
 
@@ -263,6 +263,9 @@ export async function seedSales({ adminUid }: { adminUid: string }): Promise<voi
 
       status: s.status,
       users: s.users,
+
+      // Initialize empty comments array for all sales
+      comments: [],
 
       createdBy: adminUid,
       createdAt: now,
