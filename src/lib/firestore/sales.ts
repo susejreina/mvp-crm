@@ -187,6 +187,45 @@ export async function getProducts(): Promise<Product[]> {
   } as Product));
 }
 
+export async function createProduct(productData: {
+  name: string;
+  sku: string;
+  baseCurrency: 'USD' | 'MXN' | 'COP';
+  basePrice: number;
+}): Promise<{ success: boolean; product?: Product }> {
+  try {
+    const productsRef = collection(db, 'products');
+    const productId = productData.sku.toLowerCase().replace(/\s+/g, '-');
+    const productRef = doc(productsRef, productId);
+    
+    // Check if product with same SKU already exists
+    const existingProduct = await getDoc(productRef);
+    if (existingProduct.exists()) {
+      throw new Error('Ya existe un producto con este SKU');
+    }
+    
+    const newProduct = {
+      id: productId,
+      name: productData.name,
+      sku: productData.sku,
+      baseCurrency: productData.baseCurrency,
+      basePrice: productData.basePrice,
+      active: true,
+      createdAt: Timestamp.now(),
+    };
+    
+    await setDoc(productRef, newProduct);
+    
+    return {
+      success: true,
+      product: newProduct,
+    };
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
+  }
+}
+
 /**
  * Get all reference data (sources, payment methods, evidence types)
  */

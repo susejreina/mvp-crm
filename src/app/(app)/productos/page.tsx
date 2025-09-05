@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Download, ChevronUp, ChevronDown } from 'lucide-react';
+import { Download, ChevronUp, ChevronDown, Plus } from 'lucide-react';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
+import Button from '../../../components/ui/Button';
 import Toast from '../../../components/ui/Toast';
 import Input from '../../../components/ui/Input';
 import Pagination from '../../../components/sales/Pagination';
-import { getProducts } from '../../../lib/firestore/sales';
+import AddProductModal from '../../../components/products/AddProductModal';
+import { getProducts, createProduct } from '../../../lib/firestore/sales';
 import { Product } from '../../../lib/types';
 import { formatDate, formatCurrency } from '../../../lib/utils/csvExport';
 import { Timestamp } from 'firebase/firestore';
@@ -90,6 +92,7 @@ export default function ProductosPage() {
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error';
@@ -202,6 +205,32 @@ export default function ProductosPage() {
     }
   };
 
+  const handleAddProduct = async (productData: {
+    name: string;
+    sku: string;
+    baseCurrency: 'USD' | 'MXN' | 'COP';
+    basePrice: number;
+  }) => {
+    try {
+      const result = await createProduct(productData);
+      
+      if (result.success) {
+        await loadProducts(); // Reload products list
+        setShowAddModal(false);
+        setToast({
+          message: 'Producto agregado correctamente',
+          type: 'success',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error creating product:', error);
+      setToast({
+        message: error.message || 'Error al agregar producto',
+        type: 'error',
+      });
+    }
+  };
+
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1); // Reset to first page
@@ -284,14 +313,20 @@ export default function ProductosPage() {
           <h1 className="text-3xl md:text-4xl text-gray-900">
             Registro <span className="font-semibold">de productos</span>
           </h1>
-          <button
-            onClick={exportProductsToCSV}
-            disabled={loading}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Exportar datos
-          </button>
+          <div className="flex gap-3">
+            <Button onClick={() => setShowAddModal(true)} className="inline-flex items-center">
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar Producto
+            </Button>
+            <button
+              onClick={exportProductsToCSV}
+              disabled={loading}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar datos
+            </button>
+          </div>
         </div>
 
         {/* Search Filter */}
@@ -431,6 +466,14 @@ export default function ProductosPage() {
           )}
         </div>
       </div>
+
+      {/* Add Product Modal */}
+      {showAddModal && (
+        <AddProductModal
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddProduct}
+        />
+      )}
       
       {/* Toast notification */}
       {toast && (
