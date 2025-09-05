@@ -8,6 +8,7 @@ import { fetchSaleById } from '../../../../lib/sales/query';
 import { updateSaleStatus, addSaleComment } from '../../../../lib/firestore/sales';
 import { formatDate, formatCurrency } from '../../../../lib/utils/csvExport';
 import { getSaleStatusLabel } from '../../../../lib/utils/saleStatus';
+import { useAuth } from '@/contexts/AuthContext';
 import { Sale } from '../../../../lib/types';
 import { Timestamp } from 'firebase/firestore';
 
@@ -20,6 +21,7 @@ interface SaleDetailPageProps {
 export default function SaleDetailPage({ params }: SaleDetailPageProps) {
   const router = useRouter();
   const { id } = use(params);
+  const { vendor, isAdmin, isSeller } = useAuth();
   const [sale, setSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
@@ -50,14 +52,14 @@ export default function SaleDetailPage({ params }: SaleDetailPageProps) {
   }, [id]);
 
   const handleAddComment = async () => {
-    if (!sale || !comment.trim()) return;
+    if (!sale || !comment.trim() || !vendor) return;
     
     setAddingComment(true);
     try {
       await addSaleComment(sale.id, {
         message: comment.trim(),
-        createdBy: 'current-user', // TODO: Get from auth context
-        createdByName: 'Admin' // TODO: Get from auth context
+        createdBy: vendor.id,
+        createdByName: vendor.name
       });
       
       // Reload sale to get updated comments
@@ -390,44 +392,46 @@ export default function SaleDetailPage({ params }: SaleDetailPageProps) {
             </div>
           )}
 
-          {/* Pending Sale Management Section */}
-          {sale.status === 'pending' && (
-            <div className="space-y-6 pt-6 border-t border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Gestión de venta</h3>
-              
-              {/* Add Comment Section */}
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-                    Dejar nota al vendedor
-                  </label>
-                  <textarea
-                    id="comment"
-                    rows={4}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-800"
-                    placeholder="Escriba su comentario aquí..."
-                  />
-                </div>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setComment('')}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleAddComment}
-                    disabled={!comment.trim() || addingComment}
-                    className="px-4 py-2 border border-transparent rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
-                    {addingComment ? 'Agregando...' : 'Comentar'}
-                  </button>
-                </div>
+          {/* Comments Section - Available for everyone */}
+          <div className="space-y-6 pt-6 border-t border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">
+              {isAdmin ? "Gestión de venta" : "Agregar comentario"}
+            </h3>
+            
+            {/* Add Comment Section */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
+                  {isAdmin ? "Dejar nota al vendedor" : "Agregar comentario"}
+                </label>
+                <textarea
+                  id="comment"
+                  rows={4}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-800"
+                  placeholder="Escriba su comentario aquí..."
+                />
               </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setComment('')}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddComment}
+                  disabled={!comment.trim() || addingComment}
+                  className="px-4 py-2 border border-transparent rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  {addingComment ? 'Agregando...' : 'Comentar'}
+                </button>
+              </div>
+            </div>
 
-              {/* Status Change Buttons */}
+            {/* Status Change Buttons - Only for admins and pending sales */}
+            {isAdmin && sale.status === 'pending' && (
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-gray-900">Cambiar estado de la venta</h4>
                 <div className="flex space-x-3">
@@ -447,8 +451,8 @@ export default function SaleDetailPage({ params }: SaleDetailPageProps) {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
       

@@ -24,11 +24,13 @@ import { exportSalesToCSV } from '../../../lib/utils/csvExport';
 import { getProducts } from '../../../lib/firestore/sales';
 import { getActiveClients } from '../../../lib/firestore/clients';
 import { getActiveVendors } from '../../../lib/firestore/vendors';
+import { useAuth } from '@/contexts/AuthContext';
 import { Product, Client, Sale, Vendor } from '../../../lib/types';
 
 export default function VentasPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { vendor, isAdmin, isSeller } = useAuth();
   
   // State
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export default function VentasPage() {
 
   // Get initial state from URL
   const getFiltersFromURL = (): SalesQueryFilters => {
-    return {
+    const filters: SalesQueryFilters = {
       text: searchParams.get('search') || undefined,
       productId: searchParams.get('product') || undefined,
       vendorId: searchParams.get('vendor') || undefined,
@@ -71,9 +73,23 @@ export default function VentasPage() {
       sortBy: (searchParams.get('sortBy') as SortableField) || 'date',
       sortDir: (searchParams.get('sortDir') as SortDirection) || 'desc'
     };
+
+    // If user is seller, force their vendorId filter
+    if (isSeller && vendor) {
+      filters.vendorId = vendor.id;
+    }
+
+    return filters;
   };
 
-  const [filters, setFilters] = useState<SalesQueryFilters>(getFiltersFromURL());
+  const [filters, setFilters] = useState<SalesQueryFilters>({});
+  
+  // Initialize filters when vendor is available
+  useEffect(() => {
+    if (vendor) {
+      setFilters(getFiltersFromURL());
+    }
+  }, [vendor, searchParams]);
 
   // Update URL when filters change
   const updateURL = useCallback((newFilters: SalesQueryFilters, page: number = 1, newPageSize: number = pageSize) => {
@@ -81,7 +97,8 @@ export default function VentasPage() {
     
     if (newFilters.text) params.set('search', newFilters.text);
     if (newFilters.productId) params.set('product', newFilters.productId);
-    if (newFilters.vendorId) params.set('vendor', newFilters.vendorId);
+    // Only include vendor filter in URL for admins (sellers have it forced)
+    if (newFilters.vendorId && isAdmin) params.set('vendor', newFilters.vendorId);
     if (newFilters.status) params.set('status', newFilters.status);
     if (newFilters.dateFrom) params.set('dateFrom', newFilters.dateFrom.toISOString().split('T')[0]);
     if (newFilters.dateTo) params.set('dateTo', newFilters.dateTo.toISOString().split('T')[0]);
@@ -91,7 +108,7 @@ export default function VentasPage() {
     if (newPageSize !== 25) params.set('pageSize', newPageSize.toString());
 
     router.replace(`/ventas?${params.toString()}`);
-  }, [router, pageSize]);
+  }, [router, pageSize, isAdmin]);
 
   // Load initial data
   useEffect(() => {
@@ -174,6 +191,11 @@ export default function VentasPage() {
 
   // Handle filter changes
   const handleFiltersChange = (newFilters: SalesQueryFilters) => {
+    // For sellers, always keep their vendorId
+    if (isSeller && vendor) {
+      newFilters.vendorId = vendor.id;
+    }
+    
     setFilters(newFilters);
     setCurrentPage(1);
     cursorsRef.current = {}; // Reset cursors when filters change
@@ -292,6 +314,7 @@ export default function VentasPage() {
               products={products}
               vendors={vendors}
               loading={loading}
+              showVendorFilter={isAdmin}
             />
           </div>
           

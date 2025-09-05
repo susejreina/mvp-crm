@@ -7,9 +7,7 @@ import { SaleRow, SortableField, SortDirection } from '../../lib/sales/query';
 import { formatDate, formatCurrency } from '../../lib/utils/csvExport';
 import { getSaleStatusLabel } from '../../lib/utils/saleStatus';
 import { updateSaleStatusWithComment, addSaleComment } from '../../lib/firestore/sales';
-import { authService } from '../../lib/auth/service';
-import { getVendorByEmail } from '../../lib/firestore/auth';
-import { Vendor } from '../../lib/types';
+import { useAuth } from '@/contexts/AuthContext';
 import StatusChangeModal from './StatusChangeModal';
 import AddCommentModal from './AddCommentModal';
 
@@ -92,30 +90,12 @@ export default function SalesTable({
   loading = false 
 }: SalesTableProps) {
   const router = useRouter();
+  const { vendor, isAdmin, isSeller } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [statusChangeModal, setStatusChangeModal] = useState<{ isOpen: boolean; saleId?: string; customerName?: string }>({ isOpen: false });
   const [addCommentModal, setAddCommentModal] = useState<{ isOpen: boolean; saleId?: string; customerName?: string }>({ isOpen: false });
-  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Load current vendor on mount
-  useEffect(() => {
-    const loadCurrentVendor = async () => {
-      const user = await new Promise<{ email?: string } | null>((resolve) => {
-        const unsubscribe = authService.onAuthStateChanged((user) => {
-          unsubscribe();
-          resolve(user);
-        });
-      });
-
-      if (user && user.email) {
-        const vendor = await getVendorByEmail(user.email);
-        setCurrentVendor(vendor);
-      }
-    };
-
-    loadCurrentVendor();
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -152,15 +132,15 @@ export default function SalesTable({
   };
 
   const handleStatusChangeSubmit = async (status: 'approved' | 'rejected', comment: string) => {
-    if (!statusChangeModal.saleId || !currentVendor) {
+    if (!statusChangeModal.saleId || !vendor) {
       throw new Error('Missing required data');
     }
 
     try {
       await updateSaleStatusWithComment(statusChangeModal.saleId, status, {
         message: comment,
-        createdBy: currentVendor.id,
-        createdByName: currentVendor.name
+        createdBy: vendor.id,
+        createdByName: vendor.name
       });
       
       // Refresh data if callback provided
@@ -174,15 +154,15 @@ export default function SalesTable({
   };
 
   const handleAddCommentSubmit = async (comment: string) => {
-    if (!addCommentModal.saleId || !currentVendor) {
+    if (!addCommentModal.saleId || !vendor) {
       throw new Error('Missing required data');
     }
 
     try {
       await addSaleComment(addCommentModal.saleId, {
         message: comment,
-        createdBy: currentVendor.id,
-        createdByName: currentVendor.name
+        createdBy: vendor.id,
+        createdByName: vendor.name
       });
       
       // Refresh data if callback provided
@@ -357,7 +337,7 @@ export default function SalesTable({
                     <div 
                       ref={dropdownRef} 
                       className={`absolute right-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 ${
-                        index >= sales.length - 2 
+                        index >= Math.max(3, sales.length - 2) 
                           ? 'bottom-full mb-1' 
                           : 'top-full mt-1'
                       }`}
@@ -371,8 +351,8 @@ export default function SalesTable({
                           Ver detalle
                         </button>
                         
-                        {/* Status change option - only for pending sales */}
-                        {sale.status === 'pending' && (
+                        {/* Status change option - only for pending sales and admins */}
+                        {sale.status === 'pending' && isAdmin && (
                           <button
                             onClick={() => handleStatusChange(sale.id, sale.customerName)}
                             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

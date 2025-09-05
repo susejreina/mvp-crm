@@ -22,7 +22,9 @@ import {
   type CreateSaleData
 } from '../../lib/firestore/sales';
 import { updateClient } from '../../lib/firestore/clients';
-import { Client, Product } from '../../lib/types';
+import { getActiveVendors } from '../../lib/firestore/vendors';
+import { useAuth } from '@/contexts/AuthContext';
+import { Client, Product, Vendor } from '../../lib/types';
 import { Timestamp } from 'firebase/firestore';
 
 interface FormData {
@@ -42,6 +44,9 @@ interface FormData {
   week: string;
   iteration: string;
   
+  // Vendor (for admins)
+  vendorId: string;
+  
   // Evidence
   evidenceType: string;
   evidenceValue: string;
@@ -60,6 +65,7 @@ interface FormErrors {
   iteration?: string;
   evidenceValue?: string;
   usdAmount?: string;
+  vendorId?: string;
 }
 
 interface ConfirmationModalProps {
@@ -103,6 +109,7 @@ function ConfirmationModal({ isOpen, oldClientName, newEmail, onConfirm, onCance
 
 export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProps) {
   const router = useRouter();
+  const { vendor, isAdmin, isSeller } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -111,6 +118,7 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
   // Data
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [sources, setSources] = useState<Array<{id: string; name: string}>>([]);
   const [paymentMethods, setPaymentMethods] = useState<Array<{id: string; name: string}>>([]);
   const [evidenceTypes, setEvidenceTypes] = useState<Array<{id: string; name: string}>>([]);
@@ -129,6 +137,7 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
     source: '',
     week: '',
     iteration: '',
+    vendorId: '', // Will be set based on role
     evidenceType: '',
     evidenceValue: '',
   });
@@ -148,16 +157,25 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
   // Load initial data
   useEffect(() => {
     async function loadData() {
+      if (!vendor) return;
+      
       setLoading(true);
       try {
-        const [clientsData, productsData, sourcesData, paymentMethodsData, evidenceTypesData] = 
-          await Promise.all([
-            getActiveClients(),
-            getProducts(),
-            getSourcesData(),
-            getPaymentMethodsData(),
-            getEvidenceTypesData(),
-          ]);
+        const loadPromises = [
+          getActiveClients(),
+          getProducts(),
+          getSourcesData(),
+          getPaymentMethodsData(),
+          getEvidenceTypesData(),
+        ];
+
+        // Only load vendors for admins
+        if (isAdmin) {
+          loadPromises.push(getActiveVendors());
+        }
+
+        const results = await Promise.all(loadPromises);
+        const [clientsData, productsData, sourcesData, paymentMethodsData, evidenceTypesData, vendorsData] = results;
         
         setClients(clientsData);
         // Filter only active products
@@ -166,7 +184,15 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
         setPaymentMethods(paymentMethodsData);
         setEvidenceTypes(evidenceTypesData);
         
-        // No default values for week and iteration - user must fill them
+        if (isAdmin && vendorsData) {
+          // Filter out admins from vendor list, only show sellers
+          setVendors((vendorsData as Vendor[]).filter(v => v.role === 'seller'));
+        }
+
+        // Set default vendor based on role
+        if (isSeller && vendor) {
+          setFormData(prev => ({ ...prev, vendorId: vendor.id }));
+        }
         
       } catch (error) {
         console.error('Error loading data:', error);
@@ -176,7 +202,7 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
     }
     
     loadData();
-  }, []);
+  }, [vendor, isAdmin, isSeller]);
   
   // Week is not auto-calculated - user must enter it manually
   
@@ -252,6 +278,11 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
     
     if (!formData.iteration || isNaN(parseInt(formData.iteration))) {
       newErrors.iteration = 'La iteración debe ser un número válido';
+    }
+
+    // Vendor validation for admins
+    if (isAdmin && !formData.vendorId) {
+      newErrors.vendorId = 'El vendedor es requerido';
     }
     
     // USD Amount validation (required when currency is not USD)
@@ -354,9 +385,9 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
         productId: product.id,
         productName: product.name,
         
-        // Vendor info (using admin for now)
-        vendorId: 'admin',
-        vendorName: 'Admin',
+        // Vendor info
+        vendorId: data.vendorId || (vendor?.id || ''),
+        vendorName: data.vendorId ? (vendors.find(v => v.id === data.vendorId)?.name || vendor?.name || '') : (vendor?.name || ''),
         
         // Sale details
         amount: saleValidation.normalizedValue,
@@ -729,6 +760,41 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
             )}
           </div>
         </div>
+
+        {/* Vendor Selection Row - only for admins */}
+        {isAdmin && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label htmlFor="vendor" className="sr-only">
+                Vendedor *
+              </label>
+              <select
+                id="vendor"
+                value={formData.vendorId}
+                onChange={(e) => setFormData(prev => ({ ...prev, vendorId: e.target.value }))}
+                className={`w-full px-3 py-3 bg-[#E8EDF5] border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[#4A739C] ${
+                  errors.vendorId ? 'border-red-300' : 'border-gray-200'
+                }`}
+              >
+                <option value="" className="text-[#4A739C]">Seleccionar vendedor*</option>
+                {vendors.map(vendor => (
+                  <option key={vendor.id} value={vendor.id} className="text-[#4A739C]">
+                    {vendor.name}
+                  </option>
+                ))}
+              </select>
+              {errors.vendorId && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {errors.vendorId}
+                </p>
+              )}
+            </div>
+            {/* Empty divs to maintain grid layout */}
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        )}
 
         {/* Evidence Row - left aligned and 50% width */}
         <div className="space-y-4">

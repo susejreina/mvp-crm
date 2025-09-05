@@ -12,6 +12,7 @@ interface SalesFiltersProps {
   products: Product[];
   vendors: Vendor[];
   loading?: boolean;
+  showVendorFilter?: boolean;
 }
 
 export default function SalesFilters({
@@ -19,7 +20,8 @@ export default function SalesFilters({
   onFiltersChange,
   products,
   vendors,
-  loading = false
+  loading = false,
+  showVendorFilter = true
 }: SalesFiltersProps) {
   const [searchText, setSearchText] = useState(filters.text || '');
 
@@ -97,19 +99,21 @@ export default function SalesFilters({
           ))}
         </select>
 
-        {/* Vendor filter */}
-        <select
-          value={filters.vendorId || ''}
-          onChange={(e) => handleFilterChange('vendorId', e.target.value)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-700"
-        >
-          <option value="">Vendedor</option>
-          {vendors.map(vendor => (
-            <option key={vendor.id} value={vendor.id}>
-              {vendor.name}
-            </option>
-          ))}
-        </select>
+        {/* Vendor filter - only show for admins */}
+        {showVendorFilter && (
+          <select
+            value={filters.vendorId || ''}
+            onChange={(e) => handleFilterChange('vendorId', e.target.value)}
+            className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+          >
+            <option value="">Vendedor</option>
+            {vendors.map(vendor => (
+              <option key={vendor.id} value={vendor.id}>
+                {vendor.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         {/* Status filter */}
         <select

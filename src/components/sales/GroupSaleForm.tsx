@@ -20,7 +20,9 @@ import {
   type CreateSaleData
 } from '../../lib/firestore/sales';
 import { updateClient } from '../../lib/firestore/clients';
-import { Client, Product } from '../../lib/types';
+import { getActiveVendors } from '../../lib/firestore/vendors';
+import { useAuth } from '@/contexts/AuthContext';
+import { Client, Product, Vendor } from '../../lib/types';
 import { Timestamp } from 'firebase/firestore';
 
 interface FormData {
@@ -39,6 +41,9 @@ interface FormData {
   source: string;
   week: string;
   iteration: string;
+  
+  // Vendor (for admins)
+  vendorId: string;
   
   // Evidence
   evidenceType: string;

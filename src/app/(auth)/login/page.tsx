@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { authService, type AuthUser, AuthServiceError } from '@/lib/auth/service';
-import { isValidVendorAdmin, updateVendorGooglePhoto } from '@/lib/firestore/auth';
+import { isValidVendor, updateVendorGooglePhoto } from '@/lib/firestore/auth';
 import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
@@ -45,11 +45,11 @@ export default function LoginPage() {
     try {
       const result = await authService.signInWithEmailPassword(email, password);
       
-      // Check if user is a valid vendor admin
+      // Check if user is a valid vendor (admin or seller)
       if (result.user.email) {
-        const isVendorAdmin = await isValidVendorAdmin(result.user.email);
+        const isVendorValid = await isValidVendor(result.user.email);
         
-        if (!isVendorAdmin) {
+        if (!isVendorValid) {
           // Set error message BEFORE signing out to ensure it persists
           setErrors({
             general: 'Tus datos son correctos, pero no tienes permisos para acceder a la aplicación. Contacta al administrador.',
@@ -60,7 +60,7 @@ export default function LoginPage() {
           return;
         }
         
-        // User is valid vendor admin, redirect to dashboard
+        // User is valid vendor, redirect to dashboard
         router.replace('/dashboard');
       }
     } catch (err) {
@@ -80,10 +80,10 @@ export default function LoginPage() {
     try {
       const result = await authService.signInWithGoogle();
       
-      // Check if user is a valid vendor admin
+      // Check if user is a valid vendor (admin or seller)
       if (result.user.email) {
-        const isVendorAdmin = await isValidVendorAdmin(result.user.email);
-        if (!isVendorAdmin) {
+        const isVendorValid = await isValidVendor(result.user.email);
+        if (!isVendorValid) {
           // Set error message BEFORE signing out to ensure it persists
           setErrors({
             general: 'Tus datos son correctos, pero no tienes permisos para acceder a la aplicación. Contacta al administrador.',
@@ -99,7 +99,7 @@ export default function LoginPage() {
           await updateVendorGooglePhoto(result.user.email, result.user.photoURL);
         }
         
-        // User is valid vendor admin, redirect to dashboard
+        // User is valid vendor, redirect to dashboard
         router.replace('/dashboard');
       }
     } catch (err) {

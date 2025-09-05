@@ -32,32 +32,34 @@ export async function getAllVendors(): Promise<Vendor[]> {
 }
 
 /**
- * Create a new vendor
+ * Create a new vendor (calls API route to create user in Firebase Auth)
  */
 export async function createVendor(vendorData: {
   name: string;
   email: string;
   role: 'admin' | 'seller';
   position?: string;
-}): Promise<void> {
-  // Generate vendor ID from email (slug format)
-  const vendorId = vendorData.email.toLowerCase()
-    .replace(/[^a-z0-9@.]/g, '-') // Replace non-alphanumeric chars with dash
-    .replace(/@/g, '-') // Replace @ with dash
-    .replace(/\./g, '-') // Replace dots with dash
-    .replace(/-+/g, '-') // Replace multiple dashes with single dash
-    .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
+}): Promise<{ success: boolean; message?: string; tempPassword?: string; resetLink?: string }> {
+  try {
+    const response = await fetch('/api/vendors/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(vendorData),
+    });
 
-  const vendorRef = doc(db, 'vendors', vendorId);
-  
-  await setDoc(vendorRef, {
-    name: vendorData.name,
-    email: vendorData.email,
-    role: vendorData.role,
-    position: vendorData.position || 'Vendedor',
-    active: true,
-    createdAt: Timestamp.now(),
-  });
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to create vendor');
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error creating vendor:', error);
+    throw error;
+  }
 }
 
 /**

@@ -65,19 +65,12 @@ export default function AddCommentModal({
           </button>
         </div>
 
-        {/* Customer Info */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">
-            Agregar comentario para: <span className="font-medium text-gray-900">{customerName}</span>
-          </p>
-        </div>
-
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Comment */}
           <div>
             <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-              Comentario *
+              Comentario <span className="text-red-500">*</span>
             </label>
             <textarea
               id="comment"

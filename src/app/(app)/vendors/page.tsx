@@ -10,6 +10,7 @@ import Toast from '../../../components/ui/Toast';
 import Avatar from '../../../components/ui/Avatar';
 import AddVendorModal from '../../../components/vendors/AddVendorModal';
 import EditVendorModal from '../../../components/vendors/EditVendorModal';
+import VendorCreatedModal from '../../../components/vendors/VendorCreatedModal';
 import { getAllVendors, createVendor, updateVendor, updateVendorRole, toggleVendorStatus } from '../../../lib/firestore/vendors';
 import { Vendor } from '../../../lib/types';
 
@@ -22,6 +23,11 @@ export default function VendorsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
+  const [createdVendorInfo, setCreatedVendorInfo] = useState<{
+    name: string;
+    email: string;
+    tempPassword: string;
+  } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     message: string;
@@ -89,17 +95,30 @@ export default function VendorsPage() {
     position?: string;
   }) => {
     try {
-      await createVendor(vendorData);
-      await loadVendors(); // Reload vendors list
-      setShowAddModal(false);
-      setToast({
-        message: 'Vendedor agregado correctamente',
-        type: 'success',
-      });
-    } catch (error) {
+      const result = await createVendor(vendorData);
+      
+      if (result.success) {
+        await loadVendors(); // Reload vendors list
+        setShowAddModal(false);
+        
+        // Show the vendor created modal with credentials
+        if (result.tempPassword) {
+          setCreatedVendorInfo({
+            name: vendorData.name,
+            email: vendorData.email,
+            tempPassword: result.tempPassword,
+          });
+        } else {
+          setToast({
+            message: 'Vendedor agregado correctamente. Se ha enviado un email para configurar la contraseña.',
+            type: 'success',
+          });
+        }
+      }
+    } catch (error: any) {
       console.error('Error creating vendor:', error);
       setToast({
-        message: 'Error al agregar vendedor',
+        message: error.message || 'Error al agregar vendedor',
         type: 'error',
       });
     }
@@ -420,6 +439,16 @@ export default function VendorsPage() {
           }}
           onSubmit={handleUpdateVendor}
           onImageUpdate={loadVendors}
+        />
+      )}
+
+      {/* Vendor Created Modal */}
+      {createdVendorInfo && (
+        <VendorCreatedModal
+          vendorName={createdVendorInfo.name}
+          vendorEmail={createdVendorInfo.email}
+          tempPassword={createdVendorInfo.tempPassword}
+          onClose={() => setCreatedVendorInfo(null)}
         />
       )}
 
