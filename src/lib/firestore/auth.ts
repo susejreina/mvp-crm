@@ -3,9 +3,9 @@ import { db } from '../firebase';
 import { Vendor } from '../types';
 
 /**
- * Check if a user with the given email exists in vendors collection with admin role
+ * Check if a user with the given email exists in vendors collection (admin or seller)
  */
-export async function isValidVendorAdmin(email: string): Promise<boolean> {
+export async function isValidVendor(email: string): Promise<boolean> {
   try {
     // Generate vendor ID from email (same logic as createVendor)
     const vendorId = email.toLowerCase()
@@ -24,8 +24,22 @@ export async function isValidVendorAdmin(email: string): Promise<boolean> {
     
     const vendorData = vendorSnap.data() as Vendor;
     
-    // Check if vendor is active and has admin role
-    return vendorData.active === true && vendorData.role === 'admin';
+    // Check if vendor is active (both admin and seller can login)
+    return vendorData.active === true;
+  } catch (error) {
+    console.error('Error checking vendor status:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if a user with the given email exists in vendors collection with admin role
+ * @deprecated Use isValidVendor and getVendorByEmail instead
+ */
+export async function isValidVendorAdmin(email: string): Promise<boolean> {
+  try {
+    const vendor = await getVendorByEmail(email);
+    return vendor !== null && vendor.active === true && vendor.role === 'admin';
   } catch (error) {
     console.error('Error checking vendor admin status:', error);
     return false;

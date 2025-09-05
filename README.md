@@ -12,6 +12,7 @@ This CRM system is designed for directors (sales directors, HR directors, or com
 - **Dashboard Overview** - Real-time metrics showing total vendors, clients, products, and sales
 - **Sales Management** - Create and track both individual and group sales
 - **Vendor Management** - Add and manage sales team members with profile images
+- **Automatic User Creation** - When creating vendors, Firebase Auth users are created automatically
 - **Multi-currency Support** - Handle sales in USD, MXN, and COP
 - **Sales Status Tracking** - Monitor sales through pending, approved, and rejected states
 - **Comment System** - Internal communication on sales records
@@ -89,7 +90,7 @@ pnpm install
 Create a `.env.local` file in the project root:
 
 ```env
-# Firebase Configuration
+# Firebase Client Configuration (public)
 NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-auth-domain.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
@@ -97,10 +98,34 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-storage-bucket.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 
+# Firebase Admin SDK Configuration (server-side only - for automatic user creation)
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_private_key_here\n-----END PRIVATE KEY-----\n"
+
+# Application URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
 # Seeding Configuration (for development)
 SEED_ADMIN_EMAIL=admin@yourdomain.com
 SEED_ADMIN_PASSWORD=your-secure-password
 ```
+
+#### How to get Firebase Admin SDK credentials:
+
+**FIREBASE_PROJECT_ID**: Same as your regular project ID
+
+**FIREBASE_CLIENT_EMAIL & FIREBASE_PRIVATE_KEY**:
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Select your project
+3. Go to **Project Settings** (gear icon) → **Service Accounts** tab
+4. Click **"Generate New Private Key"**
+5. Download the JSON file
+6. From the JSON file, copy:
+   - `client_email` → use as `FIREBASE_CLIENT_EMAIL`
+   - `private_key` → use as `FIREBASE_PRIVATE_KEY` (keep the quotes and newlines as shown)
+
+⚠️ **IMPORTANT**: Keep this JSON file secure and never commit it to version control!
 
 ### Step 5: Create Admin User in Firebase
 
@@ -264,10 +289,13 @@ mvp-crm/
 - Automatic vendor validation
 
 ### Vendor Management
-- Add/Edit/Deactivate vendors
+- Add/Edit/Deactivate vendors with automatic Firebase Auth user creation
 - Profile image upload (Base64 stored in Firestore)
 - Google profile photo integration
 - Role management (Admin/Seller)
+- Temporary password generation and secure sharing
+- Email integration for credential sharing
+- Password reset link generation
 - Default position: "Vendedor"
 
 ### Sales Management
@@ -293,6 +321,15 @@ mvp-crm/
 - **Add Comment Modal**: For all sales, users can add internal notes and observations
 - **Unified Sale Creation**: Same modal experience across dashboard and sales page
 - **Real-time Updates**: All changes refresh the data automatically
+
+### Automatic Vendor User Creation
+When creating a new vendor through the CRM interface:
+1. **Firebase Auth User**: Automatically creates a user in Firebase Authentication
+2. **Temporary Password**: Generates a secure temporary password
+3. **Custom Claims**: Sets role-based claims for authorization
+4. **Password Reset Email**: Automatically sends password reset link to vendor
+5. **Secure Credential Sharing**: Modal interface for sharing credentials safely
+6. **Email Integration**: Option to send credentials via email client
 
 ## Testing
 

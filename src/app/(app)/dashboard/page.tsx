@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
-import { getTotalApprovedUsd, getClientsCount, getActiveProductsCount, getSellersCount } from '@/lib/dashboard/queries';
-import { authService } from '@/lib/auth/service';
-import { getVendorByEmail } from '@/lib/firestore/auth';
-import { Vendor } from '@/lib/types';
+import { 
+  getTotalApprovedUsd, 
+  getClientsCount, 
+  getActiveProductsCount, 
+  getSellersCount,
+  getTotalApprovedUsdBySeller,
+  getClientsCountBySeller
+} from '@/lib/dashboard/queries';
+import { useAuth } from '@/contexts/AuthContext';
 import KpiCard from '@/components/dashboard/KpiCard';
 import QuickActionCard from '@/components/dashboard/QuickActionCard';
 import SaleKindModal from '@/components/sales/SaleKindModal';
@@ -34,7 +39,7 @@ interface ErrorStates {
 
 export default function DashboardPage() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
+  const { vendor, isAdmin, isSeller } = useAuth();
   
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalApprovedUsd: 0,
@@ -58,17 +63,23 @@ export default function DashboardPage() {
   });
 
   const loadMetrics = async () => {
-    const promises = [
-      getTotalApprovedUsd(db).then(
-        (value) => {
-          setMetrics(prev => ({ ...prev, totalApprovedUsd: value }));
-          setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
-        },
-        (error) => {
-          setErrors(prev => ({ ...prev, totalApprovedUsd: error.message }));
-          setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
-        }
-      ),
+    if (!vendor) return;
+
+    const promises = [];
+
+    // Sales metrics - different for admin vs seller
+    if (isAdmin) {
+      promises.push(
+        getTotalApprovedUsd(db).then(
+          (value) => {
+            setMetrics(prev => ({ ...prev, totalApprovedUsd: value }));
+            setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
+          },
+          (error) => {
+            setErrors(prev => ({ ...prev, totalApprovedUsd: error.message }));
+            setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
+          }
+        ),
         getClientsCount(db).then(
           (value) => {
             setMetrics(prev => ({ ...prev, clientsCount: value }));
@@ -78,7 +89,36 @@ export default function DashboardPage() {
             setErrors(prev => ({ ...prev, clientsCount: error.message }));
             setLoading(prev => ({ ...prev, clientsCount: false }));
           }
+        )
+      );
+    } else if (isSeller) {
+      promises.push(
+        getTotalApprovedUsdBySeller(db, vendor.id).then(
+          (value) => {
+            setMetrics(prev => ({ ...prev, totalApprovedUsd: value }));
+            setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
+          },
+          (error) => {
+            setErrors(prev => ({ ...prev, totalApprovedUsd: error.message }));
+            setLoading(prev => ({ ...prev, totalApprovedUsd: false }));
+          }
         ),
+        getClientsCountBySeller(db, vendor.id).then(
+          (value) => {
+            setMetrics(prev => ({ ...prev, clientsCount: value }));
+            setLoading(prev => ({ ...prev, clientsCount: false }));
+          },
+          (error) => {
+            setErrors(prev => ({ ...prev, clientsCount: error.message }));
+            setLoading(prev => ({ ...prev, clientsCount: false }));
+          }
+        )
+      );
+    }
+
+    // Admin-only metrics
+    if (isAdmin) {
+      promises.push(
         getActiveProductsCount(db).then(
           (value) => {
             setMetrics(prev => ({ ...prev, activeProductsCount: value }));
@@ -98,30 +138,23 @@ export default function DashboardPage() {
             setErrors(prev => ({ ...prev, sellersCount: error.message }));
             setLoading(prev => ({ ...prev, sellersCount: false }));
           }
-        ),
-      ];
+        )
+      );
+    } else {
+      // For sellers, mark these as loaded with 0 values
+      setLoading(prev => ({ ...prev, activeProductsCount: false, sellersCount: false }));
+    }
 
+    if (promises.length > 0) {
       await Promise.all(promises);
-    };
-
-  const loadCurrentVendor = async () => {
-    const user = await new Promise((resolve) => {
-      const unsubscribe = authService.onAuthStateChanged((user) => {
-        unsubscribe();
-        resolve(user);
-      });
-    });
-
-    if (user && (user as any).email) {
-      const vendor = await getVendorByEmail((user as any).email);
-      setCurrentVendor(vendor);
     }
   };
 
   useEffect(() => {
-    loadMetrics();
-    loadCurrentVendor();
-  }, []);
+    if (vendor) {
+      loadMetrics();
+    }
+  }, [vendor, isAdmin, isSeller]);
 
   // Refresh metrics when window gains focus (user returns from another page)
   useEffect(() => {
@@ -144,21 +177,21 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
         <div className="mr-4">
-          {currentVendor && (
+          {vendor && (
             <Avatar
-              src={currentVendor.photoUrl}
-              googleSrc={currentVendor.googlePhotoUrl}
-              name={currentVendor.name}
+              src={vendor.photoUrl}
+              googleSrc={vendor.googlePhotoUrl}
+              name={vendor.name}
               size="lg"
             />
           )}
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Hola {currentVendor ? currentVendor.name : 'Usuario'}
+            Hola {vendor ? vendor.name : 'Usuario'}
           </h1>
           <p className="text-gray-600">
-            {currentVendor?.position || 'Sin cargo asignado'}
+            {vendor?.position || 'Sin cargo asignado'} {isSeller ? '(Vendedor)' : '(Administrador)'}
           </p>
         </div>
       </div>
@@ -173,7 +206,7 @@ export default function DashboardPage() {
 
         {/* Total Approved USD Sales */}
         <KpiCard
-          title="Ventas totales"
+          title={isSeller ? "Mis ventas totales" : "Ventas totales"}
           value={loading.totalApprovedUsd ? '' : formatCurrency(metrics.totalApprovedUsd)}
           subtitle="USD"
           href="/ventas"
@@ -191,7 +224,7 @@ export default function DashboardPage() {
 
         {/* Total Clients */}
         <KpiCard
-          title="Clientes totales"
+          title={isSeller ? "Mis clientes" : "Clientes totales"}
           value={loading.clientsCount ? '' : metrics.clientsCount}
           subtitle="Clientes"
           loading={loading.clientsCount}
@@ -205,38 +238,43 @@ export default function DashboardPage() {
           }
         />
 
-        {/* Products on Sale */}
-        <KpiCard
-          title="Productos en venta"
-          value={loading.activeProductsCount ? '' : metrics.activeProductsCount}
-          subtitle="Productos"
-          loading={loading.activeProductsCount}
-          error={errors.activeProductsCount}
-          icon={
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 2L3 7v11a2 2 0 002 2h10a2 2 0 002-2V7l-7-5zM6 9a1 1 0 012 0v3a1 1 0 11-2 0V9zm6 0a1 1 0 10-2 0v3a1 1 0 102 0V9z" clipRule="evenodd"/>
-              </svg>
-            </div>
-          }
-        />
+        {/* Products on Sale - Admin only */}
+        {isAdmin && (
+          <KpiCard
+            title="Productos en venta"
+            value={loading.activeProductsCount ? '' : metrics.activeProductsCount}
+            subtitle="Productos"
+            href="/productos"
+            loading={loading.activeProductsCount}
+            error={errors.activeProductsCount}
+            icon={
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 2L3 7v11a2 2 0 002 2h10a2 2 0 002-2V7l-7-5zM6 9a1 1 0 012 0v3a1 1 0 11-2 0V9zm6 0a1 1 0 10-2 0v3a1 1 0 102 0V9z" clipRule="evenodd"/>
+                </svg>
+              </div>
+            }
+          />
+        )}
 
-        {/* Vendors */}
-        <KpiCard
-          title="Vendedores"
-          value={loading.sellersCount ? '' : metrics.sellersCount}
-          subtitle="Comerciales"
-          href="/vendors"
-          loading={loading.sellersCount}
-          error={errors.sellersCount}
-          icon={
-            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2V4zm2 0h8a2 2 0 012 2v8a2 2 0 01-2 2H6V4zm6 4a2 2 0 11-4 0 2 2 0 014 0zm-2 6a4 4 0 100-8 4 4 0 000 8z" clipRule="evenodd"/>
-              </svg>
-            </div>
-          }
-        />
+        {/* Vendors - Admin only */}
+        {isAdmin && (
+          <KpiCard
+            title="Vendedores"
+            value={loading.sellersCount ? '' : metrics.sellersCount}
+            subtitle="Comerciales"
+            href="/vendors"
+            loading={loading.sellersCount}
+            error={errors.sellersCount}
+            icon={
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2V4zm2 0h8a2 2 0 012 2v8a2 2 0 01-2 2H6V4zm6 4a2 2 0 11-4 0 2 2 0 014 0zm-2 6a4 4 0 100-8 4 4 0 000 8z" clipRule="evenodd"/>
+                </svg>
+              </div>
+            }
+          />
+        )}
       </div>
 
       {/* Sale Kind Modal */}

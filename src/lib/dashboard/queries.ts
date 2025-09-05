@@ -80,3 +80,48 @@ export async function getSellersCount(db: Firestore): Promise<number> {
     throw new Error(`Failed to get sellers count: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
+
+// Seller-specific queries
+export async function getTotalApprovedUsdBySeller(db: Firestore, sellerId: string): Promise<number> {
+  try {
+    const salesRef = collection(db, 'sales');
+    const q = query(salesRef, where('vendorId', '==', sellerId));
+    
+    const querySnapshot = await getDocs(q);
+    
+    let total = 0;
+    querySnapshot.forEach((doc) => {
+      const sale = doc.data() as Sale;
+      // Include pending and approved, exclude rejected
+      if (sale.status !== 'rejected') {
+        // Use usdAmount field for consistent calculations regardless of currency
+        total += sale.usdAmount || sale.amount; // Fallback to amount for legacy data
+      }
+    });
+    
+    return total;
+  } catch (error) {
+    throw new Error(`Failed to get total USD sales for seller: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+export async function getClientsCountBySeller(db: Firestore, sellerId: string): Promise<number> {
+  try {
+    const salesRef = collection(db, 'sales');
+    const q = query(salesRef, where('vendorId', '==', sellerId));
+    
+    const querySnapshot = await getDocs(q);
+    const clientIds = new Set<string>();
+    
+    querySnapshot.forEach((doc) => {
+      const sale = doc.data() as Sale;
+      if (sale.clientId) {
+        clientIds.add(sale.clientId);
+      }
+    });
+    
+    return clientIds.size;
+  } catch (error) {
+    throw new Error(`Failed to get clients count for seller: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

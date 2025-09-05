@@ -5,12 +5,11 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { authService } from '@/lib/auth/service';
-import { getVendorByEmail } from '@/lib/firestore/auth';
-import { Vendor } from '@/lib/types';
+import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, ChevronDown } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 
-const navigation = [
+const adminNavigation = [
   { name: 'Escritorio', href: '/dashboard' },
   { name: 'Ventas', href: '/ventas' },
   { name: 'Clientes', href: '/clientes' },
@@ -18,11 +17,19 @@ const navigation = [
   { name: 'Vendedores', href: '/vendors' },
 ];
 
+const sellerNavigation = [
+  { name: 'Escritorio', href: '/dashboard' },
+  { name: 'Ventas', href: '/ventas' },
+];
+
 export default function AppHeader() {
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
+  const { vendor, isAdmin, isSeller } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Choose navigation based on role
+  const navigation = isAdmin ? adminNavigation : sellerNavigation;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -38,24 +45,6 @@ export default function AppHeader() {
     }
   }, [dropdownOpen]);
 
-  // Load current vendor data
-  useEffect(() => {
-    const loadCurrentVendor = async () => {
-      const user = await new Promise((resolve) => {
-        const unsubscribe = authService.onAuthStateChanged((user) => {
-          unsubscribe();
-          resolve(user);
-        });
-      });
-
-      if (user && (user as any).email) {
-        const vendor = await getVendorByEmail((user as any).email);
-        setCurrentVendor(vendor);
-      }
-    };
-
-    loadCurrentVendor();
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -114,11 +103,11 @@ export default function AppHeader() {
                 aria-haspopup="true"
               >
                 <div className="mr-2">
-                  {currentVendor ? (
+                  {vendor ? (
                     <Avatar
-                      src={currentVendor.photoUrl}
-                      googleSrc={currentVendor.googlePhotoUrl}
-                      name={currentVendor.name}
+                      src={vendor.photoUrl}
+                      googleSrc={vendor.googlePhotoUrl}
+                      name={vendor.name}
                       size="sm"
                     />
                   ) : (
