@@ -3,7 +3,7 @@ import { collection, writeBatch, doc, Timestamp } from 'firebase/firestore';
 import { Vendor, slugifyEmail } from '../types';
 
 const demoVendors: Omit<Vendor, 'id' | 'createdAt'>[] = [
-  { name: 'Angela Ojeda', email: 'angela@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=angela', role: 'admin', position: 'Director Comercial', active: true },
+  { name: 'Angela Ojeda', email: 'admin@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=angela', role: 'admin', position: 'Director Comercial', active: true },
   { name: 'Angelica Bou', email: 'angelica@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=angelica', role: 'seller', position: 'Vendedor', active: true },
   { name: 'Carlos Rodriguez', email: 'carlos@academiadeia.com', photoUrl: 'https://i.pravatar.cc/150?u=carlos', role: 'seller', position: 'Vendedor', active: true },
 ];
@@ -14,12 +14,23 @@ export async function seedVendors() {
   const vendorsRef = collection(db, 'vendors');
   const now = Timestamp.now();
 
-  demoVendors.forEach(vendor => {
+  // Use admin email from environment if available
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  
+  // Update the first vendor (admin) to use the environment email
+  const vendorsToSeed = [...demoVendors];
+  vendorsToSeed[0] = {
+    ...vendorsToSeed[0],
+    email: adminEmail,
+    name: 'Admin User'
+  };
+
+  vendorsToSeed.forEach(vendor => {
     const vendorId = slugifyEmail(vendor.email);
     const docRef = doc(vendorsRef, vendorId);
     batch.set(docRef, { ...vendor, id: vendorId, createdAt: now });
   });
 
   await batch.commit();
-  console.log(`Seeded ${demoVendors.length} vendors`);
+  console.log(`Seeded ${vendorsToSeed.length} vendors`);
 }

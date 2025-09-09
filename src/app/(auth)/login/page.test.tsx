@@ -164,7 +164,7 @@ describe('LoginPage', () => {
     });
 
     it('should show loading state during sign in', async () => {
-      let resolveSignIn: (value: any) => void;
+      let resolveSignIn: (value: { user: { uid: string; email: string; displayName: string; photoURL: string | null; } }) => void;
       vi.mocked(authService.signInWithEmailPassword).mockImplementation(
         () => new Promise((resolve) => { resolveSignIn = resolve; })
       );
@@ -360,7 +360,7 @@ describe('LoginPage', () => {
     });
 
     it('should have proper ARIA attributes for loading buttons', async () => {
-      let resolveSignIn: (value: any) => void;
+      let resolveSignIn: (value: { user: { uid: string; email: string; displayName: string; photoURL: string | null; } }) => void;
       vi.mocked(authService.signInWithEmailPassword).mockImplementation(
         () => new Promise((resolve) => { resolveSignIn = resolve; })
       );

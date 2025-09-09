@@ -22,10 +22,9 @@ import {
 } from '../../../lib/sales/query';
 import { exportSalesToCSV } from '../../../lib/utils/csvExport';
 import { getProducts } from '../../../lib/firestore/sales';
-import { getActiveClients } from '../../../lib/firestore/clients';
 import { getActiveVendors } from '../../../lib/firestore/vendors';
 import { useAuth } from '@/contexts/AuthContext';
-import { Product, Client, Sale, Vendor } from '../../../lib/types';
+import { Product, Sale, Vendor } from '../../../lib/types';
 
 export default function VentasPage() {
   const router = useRouter();

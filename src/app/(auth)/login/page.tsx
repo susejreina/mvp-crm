@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { authService, type AuthUser, AuthServiceError } from '@/lib/auth/service';
+import { authService, AuthServiceError } from '@/lib/auth/service';
 import { isValidVendor, updateVendorGooglePhoto } from '@/lib/firestore/auth';
 import Button from '@/components/ui/Button';
 
