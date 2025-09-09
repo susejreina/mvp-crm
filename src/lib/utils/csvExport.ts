@@ -3,7 +3,7 @@ import { SaleRow } from '../sales/query';
 /**
  * Convert array of objects to CSV format
  */
-export function arrayToCSV(data: any[], headers: string[]): string {
+export function arrayToCSV(data: Record<string, unknown>[], headers: string[]): string {
   // Create header row
   const csvHeaders = headers.join(',');
   
@@ -73,7 +73,7 @@ export function exportSalesToCSV(sales: SaleRow[], filename: string = 'sales_fil
     'status'
   ];
   
-  const csvContent = arrayToCSV(sales, headers);
+  const csvContent = arrayToCSV(sales as unknown as Record<string, unknown>[], headers);
   downloadCSV(csvContent, filename);
 }
 

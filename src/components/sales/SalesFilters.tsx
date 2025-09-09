@@ -20,7 +20,6 @@ export default function SalesFilters({
   onFiltersChange,
   products,
   vendors,
-  loading = false,
   showVendorFilter = true
 }: SalesFiltersProps) {
   const [searchText, setSearchText] = useState(filters.text || '');
@@ -32,7 +31,7 @@ export default function SalesFilters({
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchText]);
+  }, [searchText, filters, onFiltersChange]);
 
   const handleFilterChange = (key: keyof SalesQueryFilters, value: string | Date | undefined) => {
     onFiltersChange({

@@ -15,8 +15,8 @@ export async function seedPaymentMethods(): Promise<{ created: number; updated: 
   const now = Timestamp.now();
   
   let created = 0;
-  let updated = 0;
-  let skipped = 0;
+  const updated = 0;
+  const skipped = 0;
 
   for (const method of paymentMethodsData) {
     const docRef = doc(paymentMethodsRef, method.id);

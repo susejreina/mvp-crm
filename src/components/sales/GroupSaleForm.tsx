@@ -20,9 +20,7 @@ import {
   type CreateSaleData
 } from '../../lib/firestore/sales';
 import { updateClient } from '../../lib/firestore/clients';
-import { getActiveVendors } from '../../lib/firestore/vendors';
-import { useAuth } from '@/contexts/AuthContext';
-import { Client, Product, Vendor } from '../../lib/types';
+import { Client, Product } from '../../lib/types';
 import { Timestamp } from 'firebase/firestore';
 
 interface FormData {
@@ -144,6 +142,7 @@ export default function GroupSaleForm({ onSuccess }: GroupSaleFormProps) {
     iteration: '',
     evidenceType: '',
     evidenceValue: '',
+    vendorId: '', // Will be set based on role
   });
   
   // Users state - start with one default user for group sales
@@ -175,12 +174,12 @@ export default function GroupSaleForm({ onSuccess }: GroupSaleFormProps) {
             getEvidenceTypesData(),
           ]);
         
-        setClients(clientsData);
+        setClients(clientsData as Client[]);
         // Filter only active products
-        setProducts(productsData.filter(product => product.active));
-        setSources(sourcesData);
-        setPaymentMethods(paymentMethodsData);
-        setEvidenceTypes(evidenceTypesData);
+        setProducts((productsData as Product[]).filter(product => product.active));
+        setSources(sourcesData as Array<{id: string; name: string}>);
+        setPaymentMethods(paymentMethodsData as Array<{id: string; name: string}>);
+        setEvidenceTypes(evidenceTypesData as Array<{id: string; name: string}>);
         
       } catch (error) {
         console.error('Error loading data:', error);

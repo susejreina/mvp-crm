@@ -14,8 +14,7 @@ interface AddCommentModalProps {
 export default function AddCommentModal({
   isOpen,
   onClose,
-  onSubmit,
-  customerName
+  onSubmit
 }: AddCommentModalProps) {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);

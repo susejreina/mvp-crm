@@ -87,7 +87,7 @@ export default function AddProductModal({ onClose, onSubmit }: AddProductModalPr
         basePrice: parseFloat(formData.basePrice),
       });
       // Modal will be closed by parent component after successful submission
-    } catch (error) {
+    } catch {
       // Error handling is done in parent component
     } finally {
       setLoading(false);

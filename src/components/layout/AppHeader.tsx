@@ -25,7 +25,7 @@ const sellerNavigation = [
 export default function AppHeader() {
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { vendor, isAdmin, isSeller } = useAuth();
+  const { vendor, isAdmin } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Choose navigation based on role

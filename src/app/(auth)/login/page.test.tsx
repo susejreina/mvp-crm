@@ -77,7 +77,7 @@ describe('LoginPage', () => {
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
       await user.click(submitButton);
 
-      // Mensajes
+      // Messages
       expect(screen.getByText('El email es requerido')).toBeInTheDocument();
       expect(screen.getByText('La contraseña es requerida')).toBeInTheDocument();
 
@@ -130,7 +130,7 @@ describe('LoginPage', () => {
       expect(screen.getByText('El email es requerido')).toBeInTheDocument();
       expect(emailInput).toHaveAttribute('aria-invalid', 'true');
 
-      // Al tipear, se limpia el error
+      // When typing, the error is cleared
       await user.type(emailInput, 'test@example.com');
       expect(screen.queryByText('El email es requerido')).not.toBeInTheDocument();
     });
@@ -314,7 +314,7 @@ describe('LoginPage', () => {
       await user.click(sendButton);
 
       expect(authService.sendPasswordReset).not.toHaveBeenCalled();
-      // Y seguimos mostrando las instrucciones (UI actual)
+      // We continue showing the instructions (current UI)
       expect(screen.getByText(/ingresa tu email.*enlace/i)).toBeInTheDocument();
     });
 

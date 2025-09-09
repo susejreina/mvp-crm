@@ -21,7 +21,7 @@ interface SaleDetailPageProps {
 export default function SaleDetailPage({ params }: SaleDetailPageProps) {
   const router = useRouter();
   const { id } = use(params);
-  const { vendor, isAdmin, isSeller } = useAuth();
+  const { vendor, isAdmin } = useAuth();
   const [sale, setSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');

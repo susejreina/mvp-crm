@@ -1,6 +1,6 @@
 // src/lib/seed/clients.ts
 import { db } from '../firebase';
-import { collection, doc, setDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { Client, SaleUser, slugifyEmail } from '../types';
 
 export interface SaleInput {

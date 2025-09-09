@@ -13,8 +13,8 @@ export async function seedEvidenceTypes(): Promise<{ created: number; updated: n
   const now = Timestamp.now();
   
   let created = 0;
-  let updated = 0;
-  let skipped = 0;
+  const updated = 0;
+  const skipped = 0;
 
   for (const type of evidenceTypesData) {
     const docRef = doc(evidenceTypesRef, type.id);

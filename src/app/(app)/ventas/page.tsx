@@ -61,7 +61,7 @@ export default function VentasPage() {
   }>({});
 
   // Get initial state from URL
-  const getFiltersFromURL = (): SalesQueryFilters => {
+  const getFiltersFromURL = useCallback((): SalesQueryFilters => {
     const filters: SalesQueryFilters = {
       text: searchParams.get('search') || undefined,
       productId: searchParams.get('product') || undefined,
@@ -79,7 +79,7 @@ export default function VentasPage() {
     }
 
     return filters;
-  };
+  }, [searchParams, isSeller, vendor]);
 
   const [filters, setFilters] = useState<SalesQueryFilters>({});
   
@@ -88,7 +88,7 @@ export default function VentasPage() {
     if (vendor) {
       setFilters(getFiltersFromURL());
     }
-  }, [vendor, searchParams]);
+  }, [vendor, searchParams, getFiltersFromURL]);
 
   // Update URL when filters change
   const updateURL = useCallback((newFilters: SalesQueryFilters, page: number = 1, newPageSize: number = pageSize) => {

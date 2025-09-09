@@ -66,10 +66,10 @@ export async function POST(request: NextRequest) {
         message: 'Vendor created successfully. A password reset email has been sent.',
       });
 
-    } catch (authError: any) {
+    } catch (authError: unknown) {
       console.error('Error creating user in Firebase Auth:', authError);
       
-      if (authError.code === 'auth/email-already-exists') {
+      if ((authError as { code?: string }).code === 'auth/email-already-exists') {
         return NextResponse.json(
           { error: 'A user with this email already exists' },
           { status: 400 }

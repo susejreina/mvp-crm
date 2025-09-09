@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { 
   getTotalApprovedUsd, 
@@ -62,7 +62,7 @@ export default function DashboardPage() {
     sellersCount: null,
   });
 
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     if (!vendor) return;
 
     const promises = [];
@@ -148,13 +148,13 @@ export default function DashboardPage() {
     if (promises.length > 0) {
       await Promise.all(promises);
     }
-  };
+  }, [vendor, isAdmin, isSeller]);
 
   useEffect(() => {
     if (vendor) {
       loadMetrics();
     }
-  }, [vendor, isAdmin, isSeller]);
+  }, [vendor, isAdmin, isSeller, loadMetrics]);
 
   // Refresh metrics when window gains focus (user returns from another page)
   useEffect(() => {
@@ -164,7 +164,7 @@ export default function DashboardPage() {
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  }, [loadMetrics]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -211,7 +211,7 @@ export default function DashboardPage() {
           subtitle="USD"
           href="/ventas"
           loading={loading.totalApprovedUsd}
-          error={errors.totalApprovedUsd}
+          error={errors.totalApprovedUsd || undefined}
           icon={
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -228,7 +228,7 @@ export default function DashboardPage() {
           value={loading.clientsCount ? '' : metrics.clientsCount}
           subtitle="Clientes"
           loading={loading.clientsCount}
-          error={errors.clientsCount}
+          error={errors.clientsCount || undefined}
           icon={
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
               <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -246,7 +246,7 @@ export default function DashboardPage() {
             subtitle="Productos"
             href="/productos"
             loading={loading.activeProductsCount}
-            error={errors.activeProductsCount}
+            error={errors.activeProductsCount || undefined}
             icon={
               <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                 <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
@@ -265,7 +265,7 @@ export default function DashboardPage() {
             subtitle="Comerciales"
             href="/vendors"
             loading={loading.sellersCount}
-            error={errors.sellersCount}
+            error={errors.sellersCount || undefined}
             icon={
               <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
                 <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">

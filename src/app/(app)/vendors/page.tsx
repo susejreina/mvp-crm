@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, MoreHorizontal, Search, Eye, UserX, UserCheck, Edit } from 'lucide-react';
+import { Plus, MoreHorizontal, UserX, UserCheck, Edit } from 'lucide-react';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -115,10 +115,10 @@ export default function VendorsPage() {
           });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating vendor:', error);
       setToast({
-        message: error.message || 'Error al agregar vendedor',
+        message: (error as Error).message || 'Error al agregar vendedor',
         type: 'error',
       });
     }
@@ -224,16 +224,6 @@ export default function VendorsPage() {
     { value: 'seller', label: 'Vendedor' },
   ];
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrador';
-      case 'seller':
-        return 'Vendedor';
-      default:
-        return role;
-    }
-  };
 
   if (loading) {
     return (

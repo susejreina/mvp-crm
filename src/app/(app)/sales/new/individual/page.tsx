@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Metadata } from 'next';
 import IndividualSaleForm from '../../../../../components/sales/IndividualSaleForm';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
 import Toast from '../../../../../components/ui/Toast';

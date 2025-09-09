@@ -21,7 +21,7 @@ export async function seedVendors() {
   const vendorsToSeed = [...demoVendors];
   vendorsToSeed[0] = {
     ...vendorsToSeed[0],
-    email: adminEmail,
+    email: adminEmail || 'admin@academiadeia.com',
     name: 'Admin User'
   };
 

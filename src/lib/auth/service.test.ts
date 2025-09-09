@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth';
 import { authService, AuthServiceError } from './service';
 
-// Mock Firebase Auth (incluye GoogleAuthProvider con addScope)
+// Mock Firebase Auth (includes GoogleAuthProvider with addScope)
 vi.mock('firebase/auth', () => {
   const user = {
     uid: 'test-uid',
@@ -25,10 +25,10 @@ vi.mock('firebase/auth', () => {
   return {
     __esModule: true,
     GoogleAuthProvider,
-    signInWithPopup: vi.fn(async (_auth, _provider) => ({ user })),
-    signInWithEmailAndPassword: vi.fn(async (_auth, email: string, _pwd: string) => {
+    signInWithPopup: vi.fn(async () => ({ user })),
+    signInWithEmailAndPassword: vi.fn(async (auth, email: string) => {
       if (email === 'bad@test.com') {
-        const err = new Error('Invalid') as any;
+        const err = new Error('Invalid') as Error & { code: string };
         err.code = 'auth/invalid-credential';
         throw err;
       }

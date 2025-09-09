@@ -5,8 +5,8 @@ import Avatar from './Avatar';
 // Mock Next.js Image component
 vi.mock('next/image', () => ({
   __esModule: true,
-  default: ({ src, alt, onError, ...props }: any) => {
-    // eslint-disable-next-line jsx-a11y/alt-text
+  default: ({ src, alt, onError, ...props }: { src: string; alt: string; onError: () => void; [key: string]: unknown }) => {
+    // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt={alt} onError={onError} {...props} />;
   },
 }));

@@ -90,7 +90,7 @@ export default function SalesTable({
   loading = false 
 }: SalesTableProps) {
   const router = useRouter();
-  const { vendor, isAdmin, isSeller } = useAuth();
+  const { vendor, isAdmin } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [statusChangeModal, setStatusChangeModal] = useState<{ isOpen: boolean; saleId?: string; customerName?: string }>({ isOpen: false });
   const [addCommentModal, setAddCommentModal] = useState<{ isOpen: boolean; saleId?: string; customerName?: string }>({ isOpen: false });

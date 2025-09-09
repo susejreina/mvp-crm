@@ -93,7 +93,7 @@ export default function EditVendorModal({ vendor, onClose, onSubmit, onImageUpda
     try {
       await onSubmit(vendor.id, formData);
       // Modal will be closed by parent component after successful submission
-    } catch (error) {
+    } catch {
       // Error handling is done in parent component
     } finally {
       setLoading(false);

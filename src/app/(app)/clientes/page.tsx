@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Download, Loader2, Plus, Minus, ChevronUp, ChevronDown } from 'lucide-react';
+import { Download, Plus, Minus, ChevronUp, ChevronDown } from 'lucide-react';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
 import Toast from '../../../components/ui/Toast';
 import Input from '../../../components/ui/Input';
@@ -135,13 +135,13 @@ export default function ClientesPage() {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any = a[sortBy];
-      let bValue: any = b[sortBy];
+      let aValue: unknown = a[sortBy];
+      let bValue: unknown = b[sortBy];
 
       // Handle timestamp fields
       if (sortBy === 'createdAt' || sortBy === 'lastPurchaseAt') {
-        aValue = aValue instanceof Timestamp ? aValue.toDate() : new Date(aValue);
-        bValue = bValue instanceof Timestamp ? bValue.toDate() : new Date(bValue);
+        aValue = aValue instanceof Timestamp ? aValue.toDate() : new Date(aValue as string | Date);
+        bValue = bValue instanceof Timestamp ? bValue.toDate() : new Date(bValue as string | Date);
       }
 
       // Handle null/undefined values
@@ -155,7 +155,18 @@ export default function ClientesPage() {
         bValue = bValue.toLowerCase();
       }
 
-      const result = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      let result = 0;
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        result = aValue.localeCompare(bValue);
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        result = aValue - bValue;
+      } else if (aValue instanceof Date && bValue instanceof Date) {
+        result = aValue.getTime() - bValue.getTime();
+      } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+        result = Number(aValue) - Number(bValue);
+      } else {
+        result = String(aValue).localeCompare(String(bValue));
+      }
       return sortDir === 'desc' ? -result : result;
     });
 

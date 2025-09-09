@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where, doc, setDoc, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Vendor } from '../types';
 import { uploadProfileImage, deleteProfileImage } from './storage';

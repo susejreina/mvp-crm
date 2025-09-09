@@ -12,6 +12,7 @@ interface AddVendorModalProps {
     name: string;
     email: string;
     role: 'admin' | 'seller';
+    position?: string;
   }) => Promise<void>;
 }
 
@@ -72,7 +73,7 @@ export default function AddVendorModal({ onClose, onSubmit }: AddVendorModalProp
         position: 'Vendedor'
       });
       // Modal will be closed by parent component after successful submission
-    } catch (error) {
+    } catch {
       // Error handling is done in parent component
     } finally {
       setLoading(false);

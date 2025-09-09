@@ -19,8 +19,8 @@ export async function seedSources(): Promise<{ created: number; updated: number;
   const now = Timestamp.now();
   
   let created = 0;
-  let updated = 0;
-  let skipped = 0;
+  const updated = 0;
+  const skipped = 0;
 
   for (const source of sourcesData) {
     const docRef = doc(sourcesRef, source.id);

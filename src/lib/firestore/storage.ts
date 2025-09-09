@@ -47,7 +47,7 @@ export async function deleteProfileImage(vendorId: string): Promise<void> {
     await deleteObject(imageRef);
   } catch (error) {
     // Ignore error if file doesn't exist
-    if ((error as any)?.code !== 'storage/object-not-found') {
+    if ((error as { code?: string })?.code !== 'storage/object-not-found') {
       console.error('Error deleting profile image:', error);
       throw new Error('Error al eliminar la imagen.');
     }

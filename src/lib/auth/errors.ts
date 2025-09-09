@@ -16,7 +16,7 @@ type Mapped = { title: string; message: string };
 
 export function mapFirebaseAuthError(err: unknown): Mapped {
   // Many tests/mocks don't create real FirebaseError, so we take .code if it exists
-  const code = (err as any)?.code as string | undefined;
+  const code = (err as { code?: string })?.code;
 
   switch (code) {
     case 'auth/invalid-credential':

@@ -42,50 +42,50 @@ class AuthServiceImpl implements IAuthService {
   constructor() {
     this.googleProvider = new GoogleAuthProvider();
     // Avoid breaking if the mock doesn't implement addScope:
-    (this.googleProvider as any)?.addScope?.('email');
-    (this.googleProvider as any)?.addScope?.('profile');
+    this.googleProvider.addScope('email');
+    this.googleProvider.addScope('profile');
   }
 
   async signInWithEmailPassword(email: string, password: string) {
     try {
-      const cred = await fbSignInWithEmailAndPassword(auth as any, email, password);
+      const cred = await fbSignInWithEmailAndPassword(auth, email, password);
       return { user: mapUser(cred.user)! };
     } catch (err) {
       const mapped = mapFirebaseAuthError(err);
-      throw new AuthServiceError({ code: (err as any)?.code, ...mapped });
+      throw new AuthServiceError({ code: (err as { code?: string })?.code, ...mapped });
     }
   }
 
   async signInWithGoogle() {
     try {
-      const cred = await fbSignInWithPopup(auth as any, this.googleProvider);
+      const cred = await fbSignInWithPopup(auth, this.googleProvider);
       return { user: mapUser(cred.user)! };
     } catch (err) {
       const mapped = mapFirebaseAuthError(err);
-      throw new AuthServiceError({ code: (err as any)?.code, ...mapped });
+      throw new AuthServiceError({ code: (err as { code?: string })?.code, ...mapped });
     }
   }
 
   async sendPasswordReset(email: string) {
     try {
-      await fbSendPasswordResetEmail(auth as any, email);
+      await fbSendPasswordResetEmail(auth, email);
     } catch (err) {
       const mapped = mapFirebaseAuthError(err);
-      throw new AuthServiceError({ code: (err as any)?.code, ...mapped });
+      throw new AuthServiceError({ code: (err as { code?: string })?.code, ...mapped });
     }
   }
 
   async signOut() {
     try {
-      await fbSignOut(auth as any);
+      await fbSignOut(auth);
     } catch (err) {
       const mapped = mapFirebaseAuthError(err);
-      throw new AuthServiceError({ code: (err as any)?.code, ...mapped });
+      throw new AuthServiceError({ code: (err as { code?: string })?.code, ...mapped });
     }
   }
 
   onAuthStateChanged(cb: (user: AuthUser | null) => void) {
-    return fbOnAuthStateChanged(auth as any, (u) => cb(mapUser(u)));
+    return fbOnAuthStateChanged(auth, (u) => cb(mapUser(u)));
   }
 }
 

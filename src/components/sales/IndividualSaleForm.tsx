@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Input from '../ui/Input';
-import Select from '../ui/Select';
 import Button from '../ui/Button';
 import { useUsdFieldLogic } from '../../hooks/useUsdFieldLogic';
 import { 
@@ -16,7 +14,6 @@ import {
   getSourcesData,
   getPaymentMethodsData,
   getEvidenceTypesData,
-  getWeekNumber,
   validateSaleValue,
   validateEvidenceValue,
   type CreateSaleData
@@ -143,7 +140,7 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
   });
   
   // USD amount logic
-  const { usdAmount, setUsdAmount, isUsdDisabled, handleUsdAmountChange } = useUsdFieldLogic(
+  const { usdAmount, isUsdDisabled, handleUsdAmountChange } = useUsdFieldLogic(
     formData.currency,
     formData.saleValue
   );
@@ -177,12 +174,12 @@ export default function IndividualSaleForm({ onSuccess }: IndividualSaleFormProp
         const results = await Promise.all(loadPromises);
         const [clientsData, productsData, sourcesData, paymentMethodsData, evidenceTypesData, vendorsData] = results;
         
-        setClients(clientsData);
+        setClients(clientsData as Client[]);
         // Filter only active products
-        setProducts(productsData.filter(product => product.active));
-        setSources(sourcesData);
-        setPaymentMethods(paymentMethodsData);
-        setEvidenceTypes(evidenceTypesData);
+        setProducts((productsData as Product[]).filter(product => product.active));
+        setSources(sourcesData as Array<{id: string; name: string}>);
+        setPaymentMethods(paymentMethodsData as Array<{id: string; name: string}>);
+        setEvidenceTypes(evidenceTypesData as Array<{id: string; name: string}>);
         
         if (isAdmin && vendorsData) {
           // Filter out admins from vendor list, only show sellers

@@ -61,8 +61,6 @@ function KPICard({ title, value, color, loading }: KPICardProps) {
 }
 
 export default function SalesKPIs({
-  pendingCount,
-  approvedCount, 
   pendingAmount,
   approvedAmount,
   loading = false

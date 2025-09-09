@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Cloudflare Pages specific configuration
+  serverExternalPackages: ['firebase-admin'],
 };
 
 export default nextConfig;
