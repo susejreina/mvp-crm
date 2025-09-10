@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sistema-ventas-ingress
+  namespace: academiadeia
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+  labels:
+    app: sistema-ventas
+    version: 1.0.0
+spec:
+  tls:
+  - hosts:
+    - sistema-ventas.academiadeia.com
+    secretName: sistema-ventas-tls
+  rules:
+  - host: sistema-ventas.academiadeia.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: sistema-ventas-service
+            port:
+              name: http

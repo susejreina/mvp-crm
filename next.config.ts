@@ -17,7 +17,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Cloudflare Pages specific configuration
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
+  // Firebase Admin SDK needs to be external
   serverExternalPackages: ['firebase-admin'],
 };
 

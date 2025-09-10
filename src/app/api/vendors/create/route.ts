@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
+// Firebase Admin SDK is not compatible with Edge Runtime
+// It requires Node.js runtime due to dependencies on Node.js built-in modules
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

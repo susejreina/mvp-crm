@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 export default function VendedoresPage() {
   return (
     <div className="p-6">
